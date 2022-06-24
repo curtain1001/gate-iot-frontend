@@ -63,7 +63,7 @@ const mutations = {
       }
     }
   },
-  
+
   DEL_RIGHT_VIEWS: (state, view) => {
     const index = state.visitedViews.findIndex(v => v.path === view.path)
     if (index === -1) {
@@ -196,7 +196,7 @@ const actions = {
       commit('DEL_LEFT_VIEWS', view)
       resolve([...state.visitedViews])
     })
-  },
+  }
 }
 
 export default {

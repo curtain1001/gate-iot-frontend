@@ -8,50 +8,13 @@
       :inline="true"
       label-width="85px"
     >
-      <el-form-item label="车道号" prop="laneNo">
-        <el-input
-          v-model="queryParams.laneNo"
-          placeholder="请输入车道号"
-          clearable
-          style="width: 240px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="车道名称" prop="laneName">
-        <el-input
-          v-model="queryParams.laneName"
-          placeholder="请输入车道名称"
-          clearable
-          style="width: 240px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="场站号" prop="areaNo">
-        <el-select v-model="queryParams.areaNo" placeholder="请选择场站" clearable>
+      <el-form-item label="配置参数" prop="key">
+        <el-select v-model="queryParams.key" placeholder="配置参数" clearable>
           <el-option
-            v-for="area in areaList"
-            :key="area.areaNo"
-            :label="dict.areaName"
-            :value="area.areaNo"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="海关通道号" prop="customsLaneNo">
-        <el-input
-          v-model="queryParams.customsLaneNo"
-          placeholder="请输入海关通道号"
-          clearable
-          style="width: 240px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="进出类型" prop="type">
-        <el-select v-model="queryParams.type" placeholder="请选择车道进出类型" clearable>
-          <el-option
-            v-for="dict in dict.type.btp_lane_type"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
+            v-for="option in laneConfigOptions"
+            :key="option.attribute"
+            :label="option.label"
+            :value="option.attribute"
           />
         </el-select>
       </el-form-item>
@@ -114,39 +77,17 @@
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="id" align="center" prop="laneId" />
       <el-table-column
-        label="通道名称"
+        label="配置键名"
         align="center"
         prop="laneName"
         :show-overflow-tooltip="true"
       />
       <el-table-column
-        label="通道号"
+        label="配置值"
         align="center"
         prop="laneNo"
         :show-overflow-tooltip="true"
       />
-      <el-table-column
-        label="场站号"
-        align="center"
-        prop="areaNo"
-        :show-overflow-tooltip="true"
-      />
-      <el-table-column
-        label="海关通道号"
-        align="center"
-        prop="customsLaneNo"
-        :show-overflow-tooltip="true"
-      />
-      <el-table-column
-        label="进出类型"
-        align="center"
-        prop="type"
-        :show-overflow-tooltip="true"
-      >
-        <template slot-scope="scope">
-          <span>{{ scope.row.type==0?"进":"出" }}</span>
-        </template>
-      </el-table-column>
       <el-table-column
         label="备注"
         align="center"
@@ -211,32 +152,29 @@
       :close-on-click-modal="false"
     >
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="通道号" prop="laneNo">
-          <el-input v-model="form.laneNo" placeholder="请输入通道号" />
-        </el-form-item>
-        <el-form-item label="通道名称" prop="laneName">
-          <el-input v-model="form.laneName" placeholder="请输入通道名称" />
-        </el-form-item>
-        <el-form-item label="海关通道号" prop="customsLaneNo">
-          <el-input v-model="form.customsLaneNo" placeholder="请输入通道名称" />
-        </el-form-item>
-        <el-form-item label="场站号" prop="areaNo">
-          <el-select v-model="form.areaNo" placeholder="请选择场站" clearable style="">
+        <el-form-item label="配置参数" prop="key">
+          <el-select v-model="form.laneConfigKey" placeholder="配置参数" clearable @change="selectChanges">
             <el-option
-              v-for="area in areaList"
-              :key="area.areaNo"
-              :label="dict.areaName"
-              :value="area.areaNo"
+              v-for="option in laneConfigOptions"
+              :key="option.attribute"
+              :label="option.label"
+              :value="option.attribute"
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="进出类型" prop="type">
-          <el-select v-model="form.type" placeholder="请选择车道进出类型" clearable>
+        <el-form-item v-if="selectAtt" label="配置值" prop="laneName">
+          <el-input v-if="selectAtt&&selectAtt.type ==='string'" v-model="form.laneConfigValue" type="text" placeholder="配置值" />
+          <el-input v-else-if="selectAtt&&selectAtt.type ==='number'" v-model="form.laneConfigValue" type="number" min="0" placeholder="配置值" />
+          <el-select v-else-if="selectAtt&&selectAtt.type ==='boolean'" v-model="form.laneConfigValue" placeholder="配置参数" clearable>
+            <el-option value="true" label="是">是</el-option>
+            <el-option value="false" label="否">否</el-option>
+          </el-select>
+          <el-select v-else-if="selectAtt&&selectAtt.type ==='select'" v-model="form.laneConfigValue" placeholder="配置参数" clearable>
             <el-option
-              v-for="dict in dict.type.btp_lane_type"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
+              v-for="option in selectAtt.options"
+              :key="option.key"
+              :label="option.key"
+              :value="option.value"
             />
           </el-select>
         </el-form-item>
@@ -253,20 +191,18 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
-    <router-view />
   </div>
 </template>
 
 <script>
-import { listLane, delLane, addLane, updateLane, getLane } from './api/index'
-import { getAreaLists } from '@/views/business/area/api/index.js'
-import router from '@/router'
+import { listLaneConfig, listLaneConfigOptions, delLaneConfig, editLaneConfigStatu, addLaneConfig, updateLaneConfig, getLaneConfig } from './api/index'
 
 export default {
-  name: 'Lane',
+  name: 'LaneConfig',
   dicts: ['btp_lane_type'],
   data() {
     return {
+      selectAtt: undefined,
       // 遮罩层
       loading: true,
       // 选中数组
@@ -279,8 +215,8 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
-      // 所有场站信息
-      areaList: [],
+      // 所有配置信息
+      laneConfigOptions: [],
       // 通道表格数据
       laneList: [],
       // 弹出层标题
@@ -293,37 +229,37 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
-        laneName: undefined,
-        laneNo: undefined
+        laneConfigKey: undefined,
+        laneId: undefined
       },
+      laneId: undefined,
       // 表单参数
-      form: {},
+      form: {
+      },
       // 表单校验
       rules: {
-        laneName: [
-          { required: true, message: '通道名称不能为空', trigger: 'blur' }
-        ],
-        laneNo: [
-          { required: true, message: '通道号不能为空', trigger: 'blur' }
-        ],
-        type: [
-          { required: true, message: '进出类型不能为空', trigger: 'blur' }
-        ],
-        areaNo: [
-          { required: true, message: '场站号不能为空', trigger: 'blur' }
+        laneConfigKey: [
+          { required: true, message: '配置参数不能为空', trigger: 'blur' }
         ]
       }
     }
   },
   created() {
-    this.getAreaList()
+    this.laneId = Number(this.$route.params && this.$route.params.laneId)
+    this.getLaneConfigOptions()
     this.getList()
+    this.form = {
+      laneId: this.laneId,
+      laneConfigKey: undefined,
+      laneConfigValue: undefined
+    }
   },
   methods: {
     /** 查询参数列表 */
     getList() {
       this.loading = true
-      listLane(this.addDateRange(this.queryParams, this.dateRange)).then(
+      this.queryParams.laneId = this.laneId
+      listLaneConfig(this.queryParams).then(
         (response) => {
           this.laneList = response.rows
           this.total = response.total
@@ -331,10 +267,15 @@ export default {
         }
       )
     },
-    getAreaList() {
-      getAreaLists().then((rep) => {
-        this.areaList = rep.data
+    getLaneConfigOptions() {
+      listLaneConfigOptions().then((rep) => {
+        this.laneConfigOptions = rep.data
       })
+    },
+    selectChanges(val) {
+      this.selectAtt = this.laneConfigOptions.filter(item => item.attribute === val)[0]
+      this.form.value = undefined
+      console.log(this.selectAtt)
     },
     // 取消按钮
     cancel() {
@@ -344,9 +285,9 @@ export default {
     // 表单重置
     reset() {
       this.form = {
-        areaId: undefined,
-        areaName: undefined,
-        remark: undefined
+        laneConfigKey: undefined,
+        laneConfigValue: undefined,
+        laneId: this.laneId
       }
       this.resetForm('form')
     },
@@ -377,14 +318,15 @@ export default {
     handleUpdate(row) {
       this.reset()
       const laneId = row.laneId || this.ids
-      getLane(laneId).then((response) => {
+      getLaneConfig(laneId).then((response) => {
         this.form = response.data
         this.open = true
         this.title = '修改通道信息'
       })
     },
     handleConfig(row) {
-      router.push(`/business/lane-config/index/${row.laneId}`)
+      console.log(this.$router)
+      this.$router.push({ name: '/business/lane/config', query: { laneId: '123456' }})
       console.log('修改配置：', row)
     },
     /** 提交按钮 */
@@ -392,13 +334,13 @@ export default {
       this.$refs['form'].validate((valid) => {
         if (valid) {
           if (this.form.laneId !== undefined) {
-            updateLane(this.form).then((response) => {
+            updateLaneConfig(this.form).then((response) => {
               this.$modal.msgSuccess('修改成功')
               this.open = false
               this.getList()
             })
           } else {
-            addLane(this.form).then((response) => {
+            addLaneConfig(this.form).then((response) => {
               this.$modal.msgSuccess('新增成功')
               this.open = false
               this.getList()
@@ -413,7 +355,7 @@ export default {
       this.$modal
         .confirm('是否确认删除通道编号为"' + laneIds + '"的数据项？')
         .then(function() {
-          return delLane(laneIds)
+          return delLaneConfig(laneIds)
         })
         .then(() => {
           this.getList()

@@ -51,6 +51,7 @@
 <script>
 export default {
   inheritAttrs: false,
+  // eslint-disable-next-line vue/require-prop-types
   props: ['showFileName'],
   data() {
     return {

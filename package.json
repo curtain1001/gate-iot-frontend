@@ -1,8 +1,8 @@
 {
-  "name": "ruoyi",
+  "name": "gate-iot-frontend",
   "version": "3.8.2",
   "description": "平方闸口应用平台",
-  "author": "若依",
+  "author": "pingfang",
   "license": "MIT",
   "scripts": {
     "dev": "vue-cli-service serve",
@@ -61,6 +61,7 @@
     "vuex": "3.6.0"
   },
   "devDependencies": {
+    "@babel/eslint-parser": "^7.18.2",
     "@vue/cli-plugin-babel": "4.4.6",
     "@vue/cli-plugin-eslint": "4.4.6",
     "@vue/cli-service": "4.4.6",

@@ -16,11 +16,18 @@ export function getArea(areaId) {
     method: 'get'
   })
 }
+// 查询场站详细信息
+export function getAreaLists() {
+  return request({
+    url: '/business/area/all',
+    method: 'get'
+  })
+}
 
 // 根据场站名查询场站信息
 export function getAreaByName(areaName) {
   return request({
-    url: '/business/area/configKey/' + areaName,
+    url: '/business/area/' + areaName,
     method: 'get'
   })
 }
