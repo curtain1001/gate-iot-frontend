@@ -369,7 +369,7 @@ export default {
     },
     // 多选框选中数据
     handleSelectionChange(selection) {
-      this.ids = selection.map((item) => item.areaId)
+      this.ids = selection.map((item) => item.laneId)
       this.single = selection.length !== 1
       this.multiple = !selection.length
     },
@@ -415,9 +415,14 @@ export default {
         .then(function() {
           return delLane(laneIds)
         })
-        .then(() => {
+        .then((rep) => {
           this.getList()
-          this.$modal.msgSuccess('删除成功')
+          console.log('rep' + rep)
+          if (rep.msg !== '' || rep.msg !== undefined) {
+            this.$modal.msgWarning(rep.msg)
+          } else {
+            this.$modal.msgSuccess('删除成功')
+          }
         })
         .catch(() => {})
     }

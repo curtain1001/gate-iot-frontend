@@ -107,14 +107,14 @@ export function updateLaneConfig(data) {
 // 删除配置
 export function delLaneConfig(laneConfigId) {
   return request({
-    url: '/business/lane/config' + laneConfigId,
+    url: '/business/lane/config/' + laneConfigId,
     method: 'delete'
   })
 }
 // 停用配置
-export function editLaneConfigStatu(statu) {
+export function editLaneConfigStatu(laneConfigId, statu) {
   return request({
-    url: '/business/lane/config/statu',
+    url: `/business/lane/config/status/${laneConfigId}`,
     method: 'put',
     data: statu
   })

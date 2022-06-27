@@ -75,19 +75,37 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="id" align="center" prop="laneId" />
+      <el-table-column label="id" align="center" prop="laneConfigId" />
       <el-table-column
         label="配置键名"
         align="center"
         prop="laneName"
         :show-overflow-tooltip="true"
-      />
+      >
+        <template slot-scope="scope">
+          <span>{{ getNameByLaneConfigOptions(scope.row.laneConfigKey) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column
         label="配置值"
         align="center"
-        prop="laneNo"
+        prop="laneConfigValue"
         :show-overflow-tooltip="true"
-      />
+      >
+        <template slot-scope="scope">
+          <span> {{ getNameByLaneConfigValue(scope.row) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="状态" align="center" prop="status">
+        <template slot-scope="scope">
+          <el-switch
+            v-model="scope.row.status"
+            active-value="0"
+            inactive-value="1"
+            @change="handleStatusChange(scope.row)"
+          />
+        </template>
+      </el-table-column>
       <el-table-column
         label="备注"
         align="center"
@@ -110,13 +128,6 @@
         class-name="small-padding fixed-width"
       >
         <template slot-scope="scope">
-          <el-button
-            v-hasPermi="['business:laneconfig:list']"
-            size="mini"
-            type="text"
-            icon="el-icon-setting"
-            @click="handleConfig(scope.row)"
-          >配置信息</el-button>
           <el-button
             v-hasPermi="['business:lane:edit']"
             size="mini"
@@ -152,8 +163,8 @@
       :close-on-click-modal="false"
     >
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="配置参数" prop="key">
-          <el-select v-model="form.laneConfigKey" placeholder="配置参数" clearable @change="selectChanges">
+        <el-form-item label="配置参数" prop="laneConfigKey">
+          <el-select v-model="form.laneConfigKey" placeholder="配置参数" clearable :disabled="formMethod==='update'" @change="selectChanges">
             <el-option
               v-for="option in laneConfigOptions"
               :key="option.attribute"
@@ -162,14 +173,10 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item v-if="selectAtt" label="配置值" prop="laneName">
+        <el-form-item v-if="selectAtt" label="配置值" prop="laneConfigValue">
           <el-input v-if="selectAtt&&selectAtt.type ==='string'" v-model="form.laneConfigValue" type="text" placeholder="配置值" />
           <el-input v-else-if="selectAtt&&selectAtt.type ==='number'" v-model="form.laneConfigValue" type="number" min="0" placeholder="配置值" />
-          <el-select v-else-if="selectAtt&&selectAtt.type ==='boolean'" v-model="form.laneConfigValue" placeholder="配置参数" clearable>
-            <el-option value="true" label="是">是</el-option>
-            <el-option value="false" label="否">否</el-option>
-          </el-select>
-          <el-select v-else-if="selectAtt&&selectAtt.type ==='select'" v-model="form.laneConfigValue" placeholder="配置参数" clearable>
+          <el-select v-else-if="selectAtt&&(selectAtt.type ==='select'||selectAtt.type ==='boolean')" v-model="form.laneConfigValue" placeholder="配置参数" clearable>
             <el-option
               v-for="option in selectAtt.options"
               :key="option.key"
@@ -225,6 +232,7 @@ export default {
       open: false,
       // 日期范围
       dateRange: [],
+      formMethod: '',
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -255,6 +263,29 @@ export default {
     }
   },
   methods: {
+    getNameByLaneConfigOptions(key) {
+      return this.laneConfigOptions.filter(item => item.attribute === key)[0].label
+    },
+    getNameByLaneConfigValue(row) {
+      const laneConfigOption = this.laneConfigOptions.filter(item => item.value === row.laneConfigKey)[0]
+      if (laneConfigOption.type === 'select' || laneConfigOption.type === 'boolean') {
+        return laneConfigOption.options !== '' && laneConfigOption.options !== undefined ? laneConfigOption.options.filter(item => item.value === row.laneConfigValue)[0].key : row.laneConfigValue
+      }
+      return row.laneConfigValue
+    },
+    // 用户状态修改
+    handleStatusChange(row) {
+      const label = this.getNameByLaneConfigOptions(row.laneConfigKey)
+      const text = row.status === '0' ? '启用' : '停用'
+      this.$modal.confirm('确认要"' + text + '""' + label + '"配置吗？').then(function() {
+        return editLaneConfigStatu(row.laneConfigId, row.status)
+      }).then(() => {
+        this.$modal.msgSuccess(text + '成功')
+      }).catch(function() {
+        row.status = row.status === '0' ? '1' : '0'
+      })
+    },
+
     /** 查询参数列表 */
     getList() {
       this.loading = true
@@ -289,6 +320,7 @@ export default {
         laneConfigValue: undefined,
         laneId: this.laneId
       }
+      this.selectAtt = undefined
       this.resetForm('form')
     },
     /** 搜索按钮操作 */
@@ -305,35 +337,33 @@ export default {
     /** 新增按钮操作 */
     handleAdd() {
       this.reset()
+      this.formMethod = 'add'
       this.open = true
       this.title = '添加通道信息'
     },
     // 多选框选中数据
     handleSelectionChange(selection) {
-      this.ids = selection.map((item) => item.areaId)
+      this.ids = selection.map((item) => item.laneConfigId)
       this.single = selection.length !== 1
       this.multiple = !selection.length
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset()
-      const laneId = row.laneId || this.ids
-      getLaneConfig(laneId).then((response) => {
+      this.formMethod = 'update'
+      const laneConfigId = row.laneConfigId || this.ids
+      getLaneConfig(laneConfigId).then((response) => {
         this.form = response.data
+        this.selectAtt = this.laneConfigOptions.filter(item => item.attribute === response.data.laneConfigKey)[0]
         this.open = true
         this.title = '修改通道信息'
       })
-    },
-    handleConfig(row) {
-      console.log(this.$router)
-      this.$router.push({ name: '/business/lane/config', query: { laneId: '123456' }})
-      console.log('修改配置：', row)
     },
     /** 提交按钮 */
     submitForm: function() {
       this.$refs['form'].validate((valid) => {
         if (valid) {
-          if (this.form.laneId !== undefined) {
+          if (this.form.laneConfigId !== undefined) {
             updateLaneConfig(this.form).then((response) => {
               this.$modal.msgSuccess('修改成功')
               this.open = false
@@ -351,13 +381,13 @@ export default {
     },
     /** 删除按钮操作 */
     handleDelete(row) {
-      const laneIds = row.laneId || this.ids
+      const laneConfigIds = row.laneConfigId || this.ids
       this.$modal
-        .confirm('是否确认删除通道编号为"' + laneIds + '"的数据项？')
+        .confirm('是否确认删除通道编号为"' + laneConfigIds + '"的数据项？')
         .then(function() {
-          return delLaneConfig(laneIds)
+          return delLaneConfig(laneConfigIds)
         })
-        .then(() => {
+        .then((rep) => {
           this.getList()
           this.$modal.msgSuccess('删除成功')
         })
