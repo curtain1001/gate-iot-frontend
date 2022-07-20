@@ -1,13 +1,10 @@
 <template>
   <div class="app-container home">
     <el-row :gutter="20">
-      <el-col :sm="24" :lg="24">
-      </el-col>
+      <el-col :sm="24" :lg="24" />
     </el-row>
     <el-row :gutter="20">
-      <el-col :sm="24" :lg="12" style="padding-left: 20px">
-       
-      </el-col>
+      <el-col :sm="24" :lg="12" style="padding-left: 20px" />
 
       <el-col :sm="24" :lg="12" style="padding-left: 50px">
         <el-row>
@@ -50,8 +47,7 @@
           <div slot="header" class="clearfix">
             <span>联系信息</span>
           </div>
-          <el-collapse accordion>
-          </el-collapse>
+          <el-collapse accordion />
         </el-card>
       </el-col>
       <el-col :xs="24" :sm="24" :md="12" :lg="8">
@@ -59,17 +55,15 @@
           <div slot="header" class="clearfix">
             <span>更新日志</span>
           </div>
-          <el-collapse accordion>
-          </el-collapse>
+          <el-collapse accordion />
         </el-card>
       </el-col>
       <el-col :xs="24" :sm="24" :md="12" :lg="8">
         <el-card class="update-log">
-           <div slot="header" class="clearfix">
+          <div slot="header" class="clearfix">
             <span>信息</span>
           </div>
-          <el-collapse accordion>
-          </el-collapse>
+          <el-collapse accordion />
         </el-card>
       </el-col>
     </el-row>
@@ -78,19 +72,19 @@
 
 <script>
 export default {
-  name: "Index",
+  name: 'Index',
   data() {
     return {
       // 版本号
-      version: "3.8.2",
-    };
+      version: '3.8.2'
+    }
   },
   methods: {
     goTarget(href) {
-      window.open(href, "_blank");
-    },
-  },
-};
+      window.open(href, '_blank')
+    }
+  }
+}
 </script>
 
 <style scoped lang="scss">

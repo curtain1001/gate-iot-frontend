@@ -32,7 +32,7 @@
             v-for="area in areaList"
             :key="area.areaNo"
             :label="dict.areaName"
-            :value="area.areaNo"
+            :value="area.areaId"
           />
         </el-select>
       </el-form-item>
@@ -176,6 +176,12 @@
             icon="el-icon-setting"
             @click="handleConfig(scope.row)"
           >配置信息</el-button>
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-setting"
+            @click="handleDevice(scope.row)"
+          >设备管理</el-button>
           <el-button
             v-hasPermi="['business:lane:edit']"
             size="mini"
@@ -385,6 +391,11 @@ export default {
     },
     handleConfig(row) {
       router.push(`/business/lane-config/index/${row.laneId}`)
+      console.log('修改配置：', row)
+    },
+    handleDevice(row) {
+      // router.replace 强制刷新跳转的页面
+      router.replace({ path: '/business/device', query: { laneId: row.laneId }})
       console.log('修改配置：', row)
     },
     /** 提交按钮 */

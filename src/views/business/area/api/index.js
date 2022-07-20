@@ -9,6 +9,14 @@ export function listArea(query) {
   })
 }
 
+// 查询设备列表
+export function laneAll() {
+  return request({
+    url: '/business/area/list/all',
+    method: 'get'
+  })
+}
+
 // 查询场站详细信息
 export function getArea(areaId) {
   return request({
