@@ -349,16 +349,16 @@ export default {
       }
     }
   },
-  // activated() {
-  //   const params = this.$route.query
-  //   if (params && params.laneId) {
-  //     this.queryParams.laneId = params.laneId
-  //   }
-  //   console.log(params)
-  //   this.getLaneList()
-  //   this.getProductList()
-  //   this.getList()
-  // },
+  activated() {
+    const params = this.$route.query
+    if (params && params.laneId) {
+      this.queryParams.laneId = params.laneId
+    }
+    console.log(params)
+    this.getLaneList()
+    this.getProductList()
+    this.getList()
+  },
   created() {
     const params = this.$route.query
     if (params && params.laneId) {

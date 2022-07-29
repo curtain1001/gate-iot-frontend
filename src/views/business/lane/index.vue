@@ -128,7 +128,7 @@
       <el-table-column
         label="场站号"
         align="center"
-        prop="areaNo"
+        prop="areaId"
         :show-overflow-tooltip="true"
       />
       <el-table-column
