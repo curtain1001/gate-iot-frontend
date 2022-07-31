@@ -2,7 +2,7 @@
   <el-tabs tab-position="left">
     <el-tab-pane label="添加动作">
       <div v-for="item in nodeList" :key="item.type">
-        <el-button class="add-node-btn" type="primary" size="mini" @click="$_addNode(item)">{{item.label}}</el-button>
+        <el-button class="add-node-btn" type="primary" size="mini" @click="$_addNode(item)">{{ item.label }}</el-button>
       </div>
     </el-tab-pane>
     <el-tab-pane label="添加组">
@@ -14,10 +14,16 @@
 export default {
   name: 'AddPanel',
   props: {
-    nodeData: Object,
-    lf: Object || String
+    nodeData: {
+      type: Object,
+      default: () => {}
+    },
+    lf: {
+      type: Object || String,
+      default: null
+    }
   },
-  data () {
+  data() {
     return {
       nodeList: [
         {
@@ -32,8 +38,8 @@ export default {
     }
   },
   methods: {
-    $_addNode (item) {
-      const {lf, nodeData} = this.$props
+    $_addNode(item) {
+      const { lf, nodeData } = this.$props
       const { id, x, y } = nodeData
       const nextNode = lf.addNode({
         type: item.type,
@@ -41,11 +47,11 @@ export default {
         y: y + 150
       })
       const nextId = nextNode.id
-      lf.createEdge({sourceNodeId: id, targetNodeId: nextId})
+      lf.createEdge({ sourceNodeId: id, targetNodeId: nextId })
       this.$emit('addNodeFinish')
     },
-    $_addTempalte () {
-      const {lf, nodeData} = this.$props
+    $_addTempalte() {
+      const { lf, nodeData } = this.$props
       const { id, x, y } = nodeData
       const timeNode = lf.addNode({
         type: 'download',
@@ -73,12 +79,12 @@ export default {
         x: x + 300,
         y: y + 300
       })
-      lf.createEdge({sourceNodeId: id, targetNodeId: timeNode.id})
-      lf.createEdge({sourceNodeId: timeNode.id, targetNodeId: userNode.id})
+      lf.createEdge({ sourceNodeId: id, targetNodeId: timeNode.id })
+      lf.createEdge({ sourceNodeId: timeNode.id, targetNodeId: userNode.id })
       lf.createEdge({
         sourceNodeId: userNode.id,
         targetNodeId: endNode.id,
-        endPoint: {x: x + 280, y: y + 150},
+        endPoint: { x: x + 280, y: y + 150 },
         text: {
           value: 'Y',
           x: x + 230,
@@ -94,7 +100,7 @@ export default {
           y: y + 230
         }
       })
-      lf.createEdge({sourceNodeId: pushNode.id, targetNodeId: endNode2.id, endPoint: {x: x + 280, y: y + 300}})
+      lf.createEdge({ sourceNodeId: pushNode.id, targetNodeId: endNode2.id, endPoint: { x: x + 280, y: y + 300 }})
       this.$emit('addNodeFinish')
     }
   }

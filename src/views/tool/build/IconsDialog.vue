@@ -40,6 +40,7 @@ const originList = iconList.map(name => `el-icon-${name}`)
 
 export default {
   inheritAttrs: false,
+  // eslint-disable-next-line vue/require-prop-types
   props: ['current'],
   data() {
     return {

@@ -4,7 +4,7 @@
       v-for="item in nodeList"
       :key="item.text"
       class="node-item"
-      @mousedown="$_dragNode(item)"
+      @mousedown="dragNode(item)"
     >
       <div class="node-item-icon" :class="item.class">
         <div v-if="item.type === 'user' || item.type === 'time'" class="shape" />
@@ -17,11 +17,18 @@
 export default {
   name: 'NodePanel',
   props: {
-    lf: Object,
-    nodeList: Array
+    nodeList: {
+      type: Array,
+      default: () => []
+    },
+    lf: {
+      type: Object,
+      default: null
+    }
+
   },
   methods: {
-    $_dragNode(item) {
+    dragNode(item) {
       this.$props.lf.dnd.startDrag({
         type: item.type
       })

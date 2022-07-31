@@ -4,21 +4,19 @@
     <NodePanel v-if="lf" :lf="lf" :node-list="nodeList" />
     <!-- 画布 -->
     <div id="flow" />
-    <!-- 用户节点自定义操作面板 -->
-    <AddPanel
-      v-if="showAddPanel"
-      class="add-panel"
-      :style="addPanelStyle"
+    <!-- 辅助工具栏 -->
+    <Control
+      v-if="lf"
+      class="demo-control"
       :lf="lf"
-      :node-data="addClickNode"
-      @addNodeFinish="hideAddPanel"
+      @catData="catData"
     />
     <!-- 属性面板 -->
     <el-drawer
       title="设置节点属性"
       :visible.sync="dialogVisible"
       direction="rtl"
-      size="500px"
+      size="400px"
       :before-close="closeDialog"
     >
       <PropertyDialog
@@ -42,7 +40,7 @@
 // 引入logicflow
 import LogicFlow from '@logicflow/core'
 // 从logicflow组件包中解构出控制面板、右键菜单、拖拽面板
-import { Control, Menu, DndPanel } from '@logicflow/extension'
+import { Menu, DndPanel, Snapshot, MiniMap } from '@logicflow/extension'
 // 引入logicflow样式
 import '@logicflow/core/dist/style/index.css'
 // 引入logicflow组件样式
@@ -52,11 +50,16 @@ import '@logicflow/extension/lib/style/index.css'
 // HTML
 import registerCircle from './js/registerCircle'
 import registerRect from './js/registerRect'
+import registerStart from './js/registerStart'
 import PropertyDialog from './PropertySetting/PropertyDialog'
-
+import NodePanel from './NodePanel'
+import Control from './Control'
+import DataDialog from './DataDialog'
+import { nodeList } from './js/config'
 export default {
+
   name: 'LogicFlow',
-  components: { PropertyDialog },
+  components: { NodePanel, Control, PropertyDialog, DataDialog },
   props: {
     nodeData: {
       type: Object,
@@ -66,9 +69,12 @@ export default {
   data() {
     return {
       lf: null,
+      nodeList,
       clickNode: null,
       addClickNode: null,
-      dialogVisible: false,
+      dialogVisible: false, // 数据查看弹窗
+      dataVisible: false, // 数据查看弹窗
+      graphData: null, // 数据
       config: { // logicflow配置
         stopScrollGraph: true, // 禁止鼠标滚动移动画布，默认false
         stopZoomGraph: true, // 禁止缩放画布，默认false
@@ -132,7 +138,7 @@ export default {
       const lf = new LogicFlow({
         ...this.config,
         container: document.querySelector('#flow'),
-        plugins: [Control, Menu, DndPanel]
+        plugins: [Menu, DndPanel, MiniMap, Snapshot]
         //         // 控制面板
         // LogicFlow.use()
         // // 右键菜单
@@ -141,70 +147,41 @@ export default {
         // LogicFlow.use(DndPanel)
       })
       this.lf = lf
-
+      // 设置主题
+      lf.setTheme({
+        circle: {
+          stroke: '#000000',
+          strokeWidth: 1,
+          outlineColor: '#88f'
+        },
+        rect: {
+          outlineColor: '#88f',
+          strokeWidth: 1
+        },
+        polygon: {
+          strokeWidth: 1
+        },
+        polyline: {
+          stroke: '#000000',
+          hoverStroke: '#000000',
+          selectedStroke: '#000000',
+          outlineColor: '#88f',
+          strokeWidth: 1
+        },
+        nodeText: {
+          color: '#000000'
+        },
+        edgeText: {
+          color: '#000000',
+          background: {
+            fill: '#f7f9ff'
+          }
+        }
+      })
       // 注册节点
       registerCircle(this.lf)
       registerRect(this.lf)
-      // 控制面板
-      this.lf.extension.control.addItem({
-        iconClass: 'custom-minimap',
-        title: '',
-        text: '导航',
-        onMouseEnter: (lf, ev) => {
-          const position = lf.getPointByClient(ev.x, ev.y)
-          lf.extension.miniMap.showMiniMap.show(
-            position.domOverlayPosition.x - 120,
-            position.domOverlayPosition.y + 35
-          )
-        },
-        onClick: (lf, ev) => {
-          const position = lf.getPointByClient(ev.x, ev.y)
-          lf.extension.miniMap.show(
-            position.domOverlayPosition.x - 120,
-            position.domOverlayPosition.y + 35
-          )
-        }
-      })
-
-      /*
-       * 拖拽面板内容设置
-       * 注意：最新版修改为 lf.setPatternItems() !!!
-       * 参考：http://logic-flow.org/guide/extension/component-dnd-panel.html#自定义拖拽面板内容
-       */
-      this.lf.extension.dndPanel.setPatternItems([
-        {
-          type: 'circle',
-          text: '开始',
-          label: '开始节点',
-          icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAAH6ji2bAAAABGdBTUEAALGPC/xhBQAAAnBJREFUOBGdVL1rU1EcPfdGBddmaZLiEhdx1MHZQXApraCzQ7GKLgoRBxMfcRELuihWKcXFRcEWF8HBf0DdDCKYRZpnl7p0svLe9Zzbd29eQhTbC8nv+9zf130AT63jvooOGS8Vf9Nt5zxba7sXQwODfkWpkbjTQfCGUd9gIp3uuPP8bZ946g56dYQvnBg+b1HB8VIQmMFrazKcKSvFW2dQTxJnJdQ77urmXWOMBCmXM2Rke4S7UAW+/8ywwFoewmBps2tu7mbTdp8VMOkIRAkKfrVawalJTtIliclFbaOBqa0M2xImHeVIfd/nKAfVq/LGnPss5Kh00VEdSzfwnBXPUpmykNss4lUI9C1ga+8PNrBD5YeqRY2Zz8PhjooIbfJXjowvQJBqkmEkVnktWhwu2SM7SMx7Cj0N9IC0oQXRo8xwAGzQms+xrB/nNSUWVveI48ayrFGyC2+E2C+aWrZHXvOuz+CiV6iycWe1Rd1Q6+QUG07nb5SbPrL4426d+9E1axKjY3AoRrlEeSQo2Eu0T6BWAAr6COhTcWjRaYfKG5csnvytvUr/WY4rrPMB53Uo7jZRjXaG6/CFfNMaXEu75nG47X+oepU7PKJvvzGDY1YLSKHJrK7vFUwXKkaxwhCW3u+sDFMVrIju54RYYbFKpALZAo7sB6wcKyyrd+aBMryMT2gPyD6GsQoRFkGHr14TthZni9ck0z+Pnmee460mHXbRAypKNy3nuMdrWgVKj8YVV8E7PSzp1BZ9SJnJAsXdryw/h5ctboUVi4AFiCd+lQaYMw5z3LGTBKjLQOeUF35k89f58Vv/tGh+l+PE/wG0rgfIUbZK5AAAAABJRU5ErkJggg==',
-          properties: {
-
-          }
-        },
-        {
-          type: 'rect',
-          label: '用户任务',
-          icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAATCAYAAAEFVwZaAAAABGdBTUEAALGPC/xhBQAAAqlJREFUOBF9VM9rE0EUfrMJNUKLihGbpLGtaCOIR8VjQMGDePCgCCIiCNqzCAp2MyYUCXhUtF5E0D+g1t48qAd7CCLqQUQKEWkStcEfVGlLdp/fm3aW2QQdyLzf33zz5m2IsAZ9XhDpyaaIZkTS4ASzK41TFao88GuJ3hsr2pAbipHxuSYyKRugagICGANkfFnNh3HeE2N0b3nN2cgnpcictw5veJIzxmDamSlxxQZicq/mflxhbaH8BLRbuRwNtZp0JAhoplVRUdzmCe/vO27wFuuA3S5qXruGdboy5/PRGFsbFGKo/haRtQHIrM83bVeTrOgNhZReWaYGnE4aUQgTJNvijJFF4jQ8BxJE5xfKatZWmZcTQ+BVgh7s8SgPlCkcec4mGTmieTP4xd7PcpIEg1TX6gdeLW8rTVMVLVvb7ctXoH0Cydl2QOPJBG21STE5OsnbweVYzAnD3A7PVILuY0yiiyDwSm2g441r6rMSgp6iK42yqroI2QoXeJVeA+YeZSa47gZdXaZWQKTrG93rukk/l2Al6Kzh5AZEl7dDQy+JjgFahQjRopSxPbrbvK7GRe9ePWBo1wcU7sYrFZtavXALwGw/7Dnc50urrHJuTPSoO2IMV3gUQGNg87IbSOIY9BpiT9HV7FCZ94nPXb3MSnwHn/FFFE1vG6DTby+r31KAkUktB3Qf6ikUPWxW1BkXSPQeMHHiW0+HAd2GelJsZz1OJegCxqzl+CLVHa/IibuHeJ1HAKzhuDR+ymNaRFM+4jU6UWKXorRmbyqkq/D76FffevwdCp+jN3UAN/C9JRVTDuOxC/oh+EdMnqIOrlYteKSfadVRGLJFJPSB/ti/6K8f0CNymg/iH2gO/f0DwE0yjAFO6l8JaR5j0VPwPwfaYHqOqrCI319WzwhwzNW/aQAAAABJRU5ErkJggg==',
-          className: 'important-node'
-        },
-        {
-          type: 'device',
-          label: '系统任务',
-          icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAATCAYAAAEFVwZaAAAABGdBTUEAALGPC/xhBQAAAqlJREFUOBF9VM9rE0EUfrMJNUKLihGbpLGtaCOIR8VjQMGDePCgCCIiCNqzCAp2MyYUCXhUtF5E0D+g1t48qAd7CCLqQUQKEWkStcEfVGlLdp/fm3aW2QQdyLzf33zz5m2IsAZ9XhDpyaaIZkTS4ASzK41TFao88GuJ3hsr2pAbipHxuSYyKRugagICGANkfFnNh3HeE2N0b3nN2cgnpcictw5veJIzxmDamSlxxQZicq/mflxhbaH8BLRbuRwNtZp0JAhoplVRUdzmCe/vO27wFuuA3S5qXruGdboy5/PRGFsbFGKo/haRtQHIrM83bVeTrOgNhZReWaYGnE4aUQgTJNvijJFF4jQ8BxJE5xfKatZWmZcTQ+BVgh7s8SgPlCkcec4mGTmieTP4xd7PcpIEg1TX6gdeLW8rTVMVLVvb7ctXoH0Cydl2QOPJBG21STE5OsnbweVYzAnD3A7PVILuY0yiiyDwSm2g441r6rMSgp6iK42yqroI2QoXeJVeA+YeZSa47gZdXaZWQKTrG93rukk/l2Al6Kzh5AZEl7dDQy+JjgFahQjRopSxPbrbvK7GRe9ePWBo1wcU7sYrFZtavXALwGw/7Dnc50urrHJuTPSoO2IMV3gUQGNg87IbSOIY9BpiT9HV7FCZ94nPXb3MSnwHn/FFFE1vG6DTby+r31KAkUktB3Qf6ikUPWxW1BkXSPQeMHHiW0+HAd2GelJsZz1OJegCxqzl+CLVHa/IibuHeJ1HAKzhuDR+ymNaRFM+4jU6UWKXorRmbyqkq/D76FffevwdCp+jN3UAN/C9JRVTDuOxC/oh+EdMnqIOrlYteKSfadVRGLJFJPSB/ti/6K8f0CNymg/iH2gO/f0DwE0yjAFO6l8JaR5j0VPwPwfaYHqOqrCI319WzwhwzNW/aQAAAABJRU5ErkJggg==',
-          className: 'import_icon'
-        },
-        {
-          type: 'diamond',
-          label: '条件判断',
-          icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAAVCAYAAAHeEJUAAAAABGdBTUEAALGPC/xhBQAAAvVJREFUOBGNVEFrE0EU/mY3bQoiFlOkaUJrQUQoWMGePLX24EH0IIoHKQiCV0G8iE1covgLiqA/QTzVm1JPogc9tIJYFaQtlhQxqYjSpunu+L7JvmUTU3AgmTfvffPNN++9WSA1DO182f6xwILzD5btfAoQmwL5KJEwiQyVbSVZ0IgRyV6PTpIJ81E5ZvqfHQR0HUOBHW4L5Et2kQ6Zf7iAOhTFAA8s0pEP7AXO1uAA52SbqGk6h/6J45LaLhO64ByfcUzM39V7ZiAdS2yCePPEIQYvTUHqM/n7dgQNfBKWPjpF4ISk8q3J4nB11qw6X8l+FsF3EhlkEMfrjIer3wJTLwS2aCNcj4DbGxXTw00JmAuO+Ni6bBxVUCvS5d9aa04+so4pHW5jLTywuXAL7jJ+D06sl82Sgl2JuVBQn498zkc2bGKxULHjCnSMadBKYDYYHAtsby1EQ5lNGrQd4Y3v4Zo0XdGEmDno46yCM9Tk+RiJmUYHS/aXHPNTcjxcbTFna000PFJHIVZ5lFRqRpJWk9/+QtlOUYJj9HG5pVFEU7zqIYDVsw2s+AJaD8wTd2umgSCCyUxgGsS1Y6TBwXQQTFuZaHcd8gAGioE90hlsY+wMcs30RduYtxanjMGal8H5dMW67dmT1JFtYUEe8LiQLRsPZ6IIc7A4J5tqco3T0pnv/4u0kyzrYUq7gASuEyI8VXKvB9Odytv6jS/PNaZBln0nioJG/AVQRZvApOdhjj3Jt8QC8Im09SafwdBdvIpztpxWxpeKCC+EsFdS8DCyuCn2munFpL7ctHKp+Xc5cMybeIyMAN33SPL3ZR9QV1XVwLyzHm6Iv0/yeUuUb7PPlZC4D4HZkeu6dpF4v9j9MreGtMbxMMRLIcjJic9yHi7WQ3yVKzZVWUr5UrViJvn1FfUlwe/KYVfYyWRLSGNu16hR01U9IacajXPei0wx/5BqgInvJN+MMNtNme7ReU9SBbgntovn0kKHpFg7UogZvaZiOue/q1SBo9ktHzQAAAAASUVORK5CYII='
-        },
-        {
-          type: 'circle',
-          text: '结束',
-          label: '结束节点',
-          icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAAH6ji2bAAAABGdBTUEAALGPC/xhBQAAA1BJREFUOBFtVE1IVUEYPXOf+tq40Y3vPcmFIdSjIorWoRG0ERWUgnb5FwVhYQSl72oUoZAboxKNFtWiwKRN0M+jpfSzqJAQclHo001tKkjl3emc8V69igP3znzfnO/M9zcDcKT67azmjYWTwl9Vn7Vumeqzj1DVb6cleQY4oAVnIOPb+mKAGxQmKI5CWNJ2aLPatxWa3aB9K7/fB+/Z0jUF6TmMlFLQqrkECWQzOZxYGjTlOl8eeKaIY5yHnFn486xBustDjWT6dG7pmjHOJd+33t0iitTPkK6tEvjxq4h2MozQ6WFSX/LkDUGfFwfhEZj1Auz/U4pyAi5Sznd7uKzznXeVHlI/Aywmk6j7fsUsEuCGADrWARXXwjxWQsUbIupDHJI7kF5dRktg0eN81IbiZXiTESic50iwS+t1oJgL83jAiBupLDCQqwziaWSoAFSeIR3P5Xv5az00wyIn35QRYTwdSYbz8pH8fxUUAtxnFvYmEmgI0wYXUXcCCSpeEVpXlsRhBnCEATxWylL9+EKCAYhe1NGstUa6356kS9NVvt3DU2fd+Wtbm/+lSbylJqsqkSm9CRhvoJVlvKPvF1RKY/FcPn5j4UfIMLn8D4UYb54BNsilTDXKnF4CfTobA0FpoW/LSp306wkXM+XaOJhZaFkcNM82ASNAWMrhrUbRfmyeI1FvRBTpN06WKxa9BK0o2E4Pd3zfBBEwPsv9sQBnmLVbLEIZ/Xe9LYwJu/Er17W6HYVBc7vmuk0xUQ+pqxdom5Fnp55SiytXLPYoMXNM4u4SNSCFWnrVIzKG3EGyMXo6n/BQOe+bX3FClY4PwydVhthOZ9NnS+ntiLh0fxtlUJHAuGaFoVmttpVMeum0p3WEXbcll94l1wM/gZ0Ccczop77VvN2I7TlsZCsuXf1WHvWEhjO8DPtyOVg2/mvK9QqboEth+7pD6NUQC1HN/TwvydGBARi9MZSzLE4b8Ru3XhX2PBxf8E1er2A6516o0w4sIA+lwURhAON82Kwe2iDAC1Watq4XHaGQ7skLcFOtI5lDxuM2gZe6WFIotPAhbaeYlU4to5cuarF1QrcZ/lwrLaCJl66JBocYZnrNlvm2+MBCTmUymPrYZVbjdlr/BxlMjmNmNI3SAAAAAElFTkSuQmCC'
-        }
-      ])
+      registerStart(this.lf)
 
       /*
        * 自定义右击菜单
@@ -240,8 +217,8 @@ export default {
       // 节点点击
       this.lf.on('node:click', ({ data }) => {
         console.log('node:click', data)
-        this.$data.clickNode = data
-        this.$data.dialogVisible = true
+        this.clickNode = data
+        this.dialogVisible = true
       })
       // 节点不允许建立连接
       this.lf.on('connection:not-allowed', (data) => {
@@ -250,40 +227,94 @@ export default {
           message: data.msg
         })
       })
-      // 画布点击
+      this.lf.on('edge:click', ({ data }) => {
+        console.log('edge:click', data)
+        this.clickNode = data
+        this.dialogVisible = true
+      })
+      this.lf.on('element:click', () => {
+      })
+      this.lf.on('edge:add', ({ data }) => {
+        console.log('edge:add', data)
+      })
+      this.lf.on('node:mousemove', ({ data }) => {
+        console.log('node:mousemove')
+        this.moveData = data
+      })
       this.lf.on('blank:click', (e) => {
         this.$emit('blank-click', e)
       })
-      this.lf.on('edge:click', ({ data }) => {
-        console.log('edge:click', data)
-        this.$data.clickNode = data
-        this.$data.dialogVisible = true
+      this.lf.on('connection:not-allowed', (data) => {
+        this.$message({
+          type: 'error',
+          message: data.msg
+        })
       })
     },
-    clickPlus(e, attributes) {
-      e.stopPropagation()
-      console.log('clickPlus', e, attributes)
-      const { clientX, clientY } = e
-      console.log(clientX, clientY)
-      this.$data.addPanelStyle.top = (clientY - 40) + 'px'
-      this.$data.addPanelStyle.left = clientX + 'px'
-      this.$data.showAddPanel = true
-      this.$data.addClickNode = attributes
-    },
+
     mouseDownPlus(e, attributes) {
       e.stopPropagation()
       console.log('mouseDownPlus', e, attributes)
     },
     hideAddPanel() {
-      this.$data.showAddPanel = false
-      this.$data.addPanelStyle.top = 0
-      this.$data.addPanelStyle.left = 0
-      this.$data.addClickNode = null
+      this.showAddPanel = false
+      this.addPanelStyle.top = 0
+      this.addPanelStyle.left = 0
+      this.addClickNode = null
     },
     getGraphData() {
       // lf.getGraphData() 获取流程绘图数据
       return this.lf.getGraphData()
+    },
+    getData() {
+      const data = this.lf.getGraphData()
+      console.log(JSON.stringify(data))
+    },
+    closeDialog() {
+      this.dialogVisible = false
+    },
+    catData() {
+      this.graphData = this.lf.getGraphData()
+      this.dataVisible = true
     }
   }
 }
 </script>
+<style>
+.logic-flow-view {
+  height: 100vh;
+  position: relative;
+}
+.demo-title{
+  text-align: center;
+  margin: 20px;
+}
+.demo-control{
+  position: absolute;
+  top: 50px;
+  right: 50px;
+  z-index: 2;
+}
+#LF-view{
+  width: calc(100% - 100px);
+  height: 80%;
+  outline: none;
+  margin-left: 50px;
+}
+.time-plus{
+  cursor: pointer;
+}
+.add-panel {
+  position: absolute;
+  z-index: 11;
+  background-color: white;
+  padding: 10px 5px;
+}
+.el-drawer__body {
+  height: 80%;
+  overflow: auto;
+  margin-top: -30px;
+  z-index: 3;
+}
+</style>
+

@@ -5,6 +5,7 @@
 </template>
 
 <script>
+const proxy_url = process.env.VUE_APP_WEBSOCKET_URL || 'ws://loclahost:8080/websocket/message' // 代理路由
 export default {
   name: 'App',
 
@@ -21,7 +22,7 @@ export default {
   },
   methods: {
     initWebSocket() {
-      this.$store.dispatch('websocket/WEBSOCKET_INIT', 'ws://192.168.1.40:8989/websocket/message')// 初始化ws
+      this.$store.dispatch('websocket/WEBSOCKET_INIT', proxy_url)// 初始化ws
     }
   }
 
