@@ -63,7 +63,8 @@ export default {
   components: { NodePanel, Control, PropertyDialog, DataDialog },
   provide() {
     return {
-      laneId: this.laneId
+      laneId: this.flowRow.laneId,
+      flowId: this.flowRow.flowId
     }
     // provide发送值，类型为对象
   },
@@ -72,9 +73,9 @@ export default {
       type: Object,
       default: () => {}
     },
-    laneId: {
-      type: String,
-      default: () => ''
+    flowRow: {
+      type: Object,
+      default: () => {}
     }
   },
   data() {

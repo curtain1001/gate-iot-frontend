@@ -28,7 +28,7 @@
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button
-          v-hasPermi="['system:flow:add']"
+          v-hasPermi="['business:flow:add']"
           type="primary"
           plain
           icon="el-icon-plus"
@@ -38,7 +38,7 @@
       </el-col>
       <el-col :span="1.5">
         <el-button
-          v-hasPermi="['system:flow:edit']"
+          v-hasPermi="['business:flow:edit']"
           type="success"
           plain
           icon="el-icon-edit"
@@ -49,7 +49,7 @@
       </el-col>
       <el-col :span="1.5">
         <el-button
-          v-hasPermi="['system:flow:remove']"
+          v-hasPermi="['business:flow:remove']"
           type="danger"
           plain
           icon="el-icon-delete"
@@ -60,7 +60,7 @@
       </el-col>
       <el-col :span="1.5">
         <el-button
-          v-hasPermi="['system:flow:export']"
+          v-hasPermi="['business:flow:export']"
           type="warning"
           plain
           icon="el-icon-download"
@@ -73,7 +73,7 @@
 
     <el-table v-loading="loading" :data="flowList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="" align="center" prop="flowId" />
+      <el-table-column label="序号" align="center" prop="flowId" />
       <el-table-column label="车道id" align="center" prop="laneId" />
       <el-table-column label="流程名称" align="center" prop="flowName" />
       <el-table-column label="流程内容" align="center" prop="content" />
@@ -81,14 +81,21 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
-            v-hasPermi="['system:flow:edit']"
+            v-hasPermi="['business:flow:edit']"
             size="mini"
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
           >修改</el-button>
           <el-button
-            v-hasPermi="['system:flow:remove']"
+            v-hasPermi="['business:flow:edit']"
+            size="mini"
+            type="text"
+            icon="el-icon-edit"
+            @click="handleDraw(scope.row)"
+          >绘制</el-button>
+          <el-button
+            v-hasPermi="['business:flow:remove']"
             size="mini"
             type="text"
             icon="el-icon-delete"
@@ -131,8 +138,9 @@
 </template>
 
 <script>
+import router from '@/router'
 import api from './api/index'
-import laneApi from '../lane/api/index'
+import { laneAll } from '../area/api/index'
 export default {
   name: 'Flow',
 
@@ -185,13 +193,25 @@ export default {
       }
     }
   },
+  activated() {
+    const params = this.$route.query
+    if (params && params.laneId) {
+      this.queryParams.laneId = params.laneId
+    }
+    console.log(params)
+  },
   created() {
     this.getList()
     this.getLaneList()
+    const params = this.$route.query
+    if (params && params.laneId) {
+      this.queryParams.laneId = params.laneId
+    }
+    console.log(params)
   },
   methods: {
     getLaneList() {
-      laneApi.laneAll().then((rep) => {
+      laneAll().then((rep) => {
         if (rep.code === 200) {
           this.laneList = rep.data
         }
@@ -260,19 +280,22 @@ export default {
         this.title = '修改【请填写功能名称】'
       })
     },
+    handleDraw(row) {
+      router.push({ name: 'FlowDraw', params: { flowRow: JSON.stringify(row) }})
+    },
     /** 提交按钮 */
     submitForm() {
       this.$refs['form'].validate(valid => {
         if (valid) {
           if (this.form.flowId != null) {
             api.updateFlow(this.form).then(response => {
-              this.msgSuccess('修改成功')
+              this.$modal.msgSuccess('修改成功')
               this.open = false
               this.getList()
             })
           } else {
             api.addFlow(this.form).then(response => {
-              this.msgSuccess('新增成功')
+              this.$modal.msgSuccess('新增成功')
               this.open = false
               this.getList()
             })
@@ -291,7 +314,7 @@ export default {
         return api.delFlow(flowIds)
       }).then(() => {
         this.getList()
-        this.msgSuccess('删除成功')
+        this.$modal.msgSuccess('删除成功')
       })
     },
     /** 导出按钮操作 */

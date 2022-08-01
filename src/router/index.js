@@ -175,6 +175,20 @@ export const dynamicRoutes = [
         meta: { title: '通道配置', activeMenu: '/business/lane' }
       }
     ]
+  },
+  {
+    path: '/business/flow-draw',
+    component: Layout,
+    hidden: true,
+    permissions: ['business:laneconfig:list'],
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/business/flow/drawFlow'),
+        name: 'FlowDraw',
+        meta: { title: '绘制流程', activeMenu: '/business/flow' }
+      }
+    ]
   }
 ]
 
