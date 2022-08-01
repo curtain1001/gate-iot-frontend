@@ -1,5 +1,5 @@
-export default function registerStart(lf) {
-  lf.register('circle', ({ CircleNode, CircleNodeModel, h }) => {
+export default function registerEnd(lf) {
+  lf.register('end', ({ CircleNode, CircleNodeModel, h }) => {
     // 自定义节点的view
     class View extends CircleNode {}
 

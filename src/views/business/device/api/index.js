@@ -1,6 +1,14 @@
 import request from '@/utils/request'
 export default {
 
+  // 查询所有设备
+  getDevices(laneId) {
+    return request({
+      url: `/business/device/all/${laneId}`,
+      method: 'get'
+    })
+  },
+
   // 查询设备产品类型列表
   listDeviceProduct() {
     return request({

@@ -1,7 +1,13 @@
 <template>
   <div class="property-dialog">
-    <User
-      v-if="nodeData.type === 'user'"
+    <DeviceNode
+      v-if="nodeData.type === 'device'"
+      :node-data="nodeData"
+      :lf="lf"
+      @onClose="handleClose"
+    />
+    <ServerNode
+      v-else-if="nodeData.type === 'server'"
       :node-data="nodeData"
       :lf="lf"
       @onClose="handleClose"
@@ -16,14 +22,16 @@
 </template>
 <script>
 // import CommonProperty from './CommonProperty'
-import User from './User.vue'
 import StartNode from './StartNode.vue'
+import DeviceNode from './DeviceNode.vue'
+import ServerNode from './ServerNode.vue'
 
 export default {
   name: 'PropertyDialog',
   components: {
     // CommonProperty,
-    User,
+    DeviceNode,
+    ServerNode,
     StartNode
   },
   props: {

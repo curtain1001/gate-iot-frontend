@@ -58,16 +58,25 @@ export default function registerStart(lf) {
         data.text = {
           value: (data.text && data.text.value) || '',
           x: data.x,
-          y: data.y + 35,
+          y: data.y + 55,
           dragable: false,
           editable: true
         }
         super.initNodeData(data)
-        this.r = 20
+        this.r = 30
       }
       // 自定义节点样式属性
       getNodeStyle() {
         const style = super.getNodeStyle()
+        // 根据 properties 中 statu 属性来设置颜色
+        const properties = this.properties
+        if (properties.statu === 'pass') {
+          style.stroke = 'green'
+        } else if (properties.statu === 'reject') {
+          style.stroke = 'red'
+        } else {
+          style.stroke = 'rgb(24, 125, 255)'
+        }
         return style
       }
       // 自定义锚点样式

@@ -14,6 +14,7 @@
 <script>
 export default {
   name: 'CrontabResult',
+  // eslint-disable-next-line vue/require-prop-types
   props: ['ex'],
   data() {
     return {
@@ -119,6 +120,7 @@ export default {
       }
       // 循环年份数组
 
+      /* eslint-disable */
       goYear: for (let Yi = YIdx; Yi < YDate.length; Yi++) {
         const YY = YDate[Yi]
         // 如果到达最大值时
@@ -313,6 +315,7 @@ export default {
                       resetMin()
                       if (hi == hDate.length - 1) {
                         resetHour()
+                        // eslint-disable-next-line eqeqeq
                         if (Di == DDate.length - 1) {
                           resetDay()
                           // eslint-disable-next-line eqeqeq

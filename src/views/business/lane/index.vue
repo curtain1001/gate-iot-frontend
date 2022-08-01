@@ -183,6 +183,12 @@
             @click="handleDevice(scope.row)"
           >设备管理</el-button>
           <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-setting"
+            @click="handleFlow(scope.row)"
+          >流程管理</el-button>
+          <el-button
             v-hasPermi="['business:lane:edit']"
             size="mini"
             type="text"
@@ -391,12 +397,14 @@ export default {
     },
     handleConfig(row) {
       router.push(`/business/lane-config/index/${row.laneId}`)
-      console.log('修改配置：', row)
     },
     handleDevice(row) {
       // router.replace 强制刷新跳转的页面
       router.replace({ path: '/business/device', query: { laneId: row.laneId }})
-      console.log('修改配置：', row)
+    },
+    handleFlow(row) {
+      // router.replace 强制刷新跳转的页面
+      router.replace({ path: '/business/flow', query: { laneId: row.laneId }})
     },
     /** 提交按钮 */
     submitForm: function() {

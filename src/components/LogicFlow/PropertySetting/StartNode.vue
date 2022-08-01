@@ -1,43 +1,45 @@
 <template>
   <div>
-    <el-form ref="form" :model="form" label-width="80px">
-      <el-form-item label="活动名称">
-        <el-input v-model="form.name" />
-      </el-form-item>
-      <el-form-item label="活动区域">
-        <el-select v-model="form.region" placeholder="请选择活动区域">
-          <el-option label="区域一" value="shanghai" />
-          <el-option label="区域二" value="beijing" />
+    <el-form ref="form" :model="form" label-width="110px">
+      <el-form-item label="指令类型">
+        <el-select v-model="form.objectType" placeholder="请选择类型" @change="objectTypeChange">
+          <el-option
+            v-for="type in objectTypeList"
+            :key="type.value"
+            :label="type.label"
+            :value="type.value"
+          />
         </el-select>
       </el-form-item>
-      <el-form-item label="活动时间">
-        <el-col :span="11">
-          <el-date-picker v-model="form.date1" type="date" placeholder="选择日期" style="width: 100%;" />
-        </el-col>
-        <el-col class="line" :span="2">-</el-col>
-        <el-col :span="11">
-          <el-time-picker v-model="form.date2" placeholder="选择时间" style="width: 100%;" />
-        </el-col>
+      <el-form-item v-if="form.objectType==='device'" label="请选择设备">
+        <el-select v-model="form.deviceId" placeholder="请选择设备" clearable @change="deviceChange">
+          <el-option
+            v-for="device in deviceList"
+            :key="device.deviceId"
+            :label="device.deviceName"
+            :value="device.deviceId"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="即时配送">
-        <el-switch v-model="form.delivery" />
+      <el-form-item v-if="form.objectType==='device' && form.deviceId" label="请选择指令">
+        <el-select v-model="form.instruction" placeholder="请选择设备指令" clearable @change="deviceInsChange">
+          <el-option
+            v-for="ins in deviceInsOptions"
+            :key="ins.value"
+            :label="ins.name"
+            :value="ins.value"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="活动性质">
-        <el-checkbox-group v-model="form.type">
-          <el-checkbox label="美食/餐厅线上活动" name="type" />
-          <el-checkbox label="地推活动" name="type" />
-          <el-checkbox label="线下主题活动" name="type" />
-          <el-checkbox label="单纯品牌曝光" name="type" />
-        </el-checkbox-group>
-      </el-form-item>
-      <el-form-item label="特殊资源">
-        <el-radio-group v-model="form.resource">
-          <el-radio label="线上品牌商赞助" />
-          <el-radio label="线下场地免费" />
-        </el-radio-group>
-      </el-form-item>
-      <el-form-item label="活动形式">
-        <el-input v-model="form.desc" type="textarea" />
+      <el-form-item v-if="form.objectType==='server'" label="请选择服务指令">
+        <el-select v-model="form.instruction" placeholder="请选择服务指令" clearable @change="serverInsChange">
+          <el-option
+            v-for="ins in serverInsOptions"
+            :key="ins.value"
+            :label="ins.name"
+            :value="ins.value"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="onSubmit">保存</el-button>
@@ -46,8 +48,19 @@
   </div>
 </template>
 <script>
+import deviceApi from '@/views/business/device/api/index'
+import instuctionApi from '@/views/business/instruction/api/index'
+const typeList = [{
+  'label': '设备',
+  'value': 'device'
+}, {
+  'label': '服务',
+  'value': 'server'
+}]
 export default {
   name: 'StartNode',
+  // inject接收值，类型为数组
+  inject: ['laneId'],
   props: {
     nodeData: {
       type: Object,
@@ -60,25 +73,88 @@ export default {
   },
   data() {
     return {
+      deviceList: [],
+      serverInsList: [],
+      deviceInsOptions: [],
+      serverInsOptions: [],
+      objectTypeList: typeList,
       form: {
-        name: '',
-        region: '',
-        date1: '',
-        date2: '',
-        delivery: false,
-        type: [],
-        resource: '',
-        desc: ''
+        instruction: '',
+        objectType: '',
+        deviceId: ''
       }
     }
   },
-  mounted() {
-    const { properties } = this.nodeData
-    if (properties) {
-      this.form = Object.assign({}, this.form, properties)
+  computed: {
+    laneId() {
+      return this.laneId()
     }
   },
+  activated() {
+    console.log('activated')
+    this.getDevices()
+  },
+  async mounted() {
+    console.log('mounted')
+    await this.getDevices()
+    await this.getServeIns()
+    const { properties } = this.nodeData
+    this.$nextTick(function() {
+      if (properties) {
+        this.form = Object.assign({}, this.form, properties)
+        if (this.form.instruction) {
+          if (this.form.objectType === 'device') {
+            const instructions = this.deviceList.filter(d => d.deviceId === this.form.deviceId)[0].instructions
+            this.deviceInsOptions = instructions.filter(i => i.insType === 'up')
+          } else if (this.form.objectType === 'server') {
+            this.serverInsOptions = this.serverInsList.filter(x => x.insType === 'up')
+          }
+        }
+      }
+    })
+
+    console.log('form' + this.form)
+  },
   methods: {
+    async getDevices() {
+      const rep = await deviceApi.getDevices(this.laneId)
+      console.log('设备列表：' + rep)
+      if (rep.code === 200) {
+        this.deviceList = rep.data
+      }
+    },
+    async getServeIns() {
+      const rep = await instuctionApi.getServeIns()
+      if (rep.code === 200) {
+        this.serverInsList = rep.data
+      }
+    },
+    objectTypeChange(val) {
+      console.log('类型：' + val)
+      this.form.deviceId = undefined
+      this.form.instruction === undefined
+      if (val === 'server') {
+        this.serverInsOptions = this.serverInsList.filter(x => x.insType === 'up')
+      }
+    },
+    deviceChange(val) {
+      console.log('设备：' + val)
+      if (!val) {
+        this.form.deviceId = undefined
+        this.form.instruction = undefined
+      } else {
+        this.form.instruction === undefined
+        const instructions = this.deviceList.filter(d => d.deviceId === val)[0].instructions
+        this.deviceInsOptions = instructions.filter(i => i.insType === 'up')
+      }
+    },
+    deviceInsChange(val) {
+      console.log('指令：' + val)
+    },
+    serverInsChange(val) {
+      console.log('服务指令+' + val)
+    },
+
     onSubmit() {
       console.log('submit!')
       const { id } = this.nodeData
@@ -86,7 +162,8 @@ export default {
         ...this.form
       })
       console.log(6666, this.form)
-      this.lf.updateText(id, this.form.name)
+      const text = (this.form.deviceId ? 'DEVICE::' + this.form.deviceId + '::' : 'SERVICE::') + this.form.instruction
+      this.lf.updateText(id, text)
       this.$emit('onClose')
     }
   }

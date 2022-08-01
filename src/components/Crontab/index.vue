@@ -218,6 +218,7 @@ export default {
     },
     // 由子组件触发，更改表达式组成的字段值
     updateCrontabValue(name, value, from) {
+      // eslint-disable-next-line no-sequences
       'updateCrontabValue', name, value, from
       this.crontabValueObj[name] = value
       if (from && from !== name) {

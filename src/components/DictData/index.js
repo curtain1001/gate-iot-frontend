@@ -10,12 +10,12 @@ function install() {
         valueField: 'dictValue',
         request(dictMeta) {
           return getDicts(dictMeta.type).then(res => res.data)
-        },
-      },
-    },
+        }
+      }
+    }
   })
 }
 
 export default {
-  install,
+  install
 }

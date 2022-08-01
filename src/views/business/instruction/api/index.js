@@ -8,6 +8,13 @@ export default {
       method: 'get'
     })
   },
+  // 获取所有服务指令
+  getServeIns(objetType = 'service') {
+    return request({
+      url: `/business/instruction/list/${objetType}`,
+      method: 'get'
+    })
+  },
 
   // 查询设备列表
   listInstruction(query) {

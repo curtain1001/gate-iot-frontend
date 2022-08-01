@@ -51,19 +51,30 @@ import '@logicflow/extension/lib/style/index.css'
 import registerCircle from './js/registerCircle'
 import registerRect from './js/registerRect'
 import registerStart from './js/registerStart'
+import registerDevice from './js/registerDevice'
+import registerServe from './js/registerServe'
 import PropertyDialog from './PropertySetting/PropertyDialog'
 import NodePanel from './NodePanel'
 import Control from './Control'
 import DataDialog from './DataDialog'
 import { nodeList } from './js/config'
 export default {
-
   name: 'LogicFlow',
   components: { NodePanel, Control, PropertyDialog, DataDialog },
+  provide() {
+    return {
+      laneId: this.laneId
+    }
+    // provide发送值，类型为对象
+  },
   props: {
     nodeData: {
       type: Object,
       default: () => {}
+    },
+    laneId: {
+      type: String,
+      default: () => ''
     }
   },
   data() {
@@ -182,7 +193,8 @@ export default {
       registerCircle(this.lf)
       registerRect(this.lf)
       registerStart(this.lf)
-
+      registerDevice(this.lf)
+      registerServe(this.lf)
       /*
        * 自定义右击菜单
        * 注意：最新版修改为 lf.setMenuConfig() !!!

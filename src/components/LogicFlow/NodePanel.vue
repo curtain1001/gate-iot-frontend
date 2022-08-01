@@ -55,7 +55,7 @@ export default {
 .node-item-icon {
   width: 30px;
   height: 30px;
-  margin-left: 20px;
+  margin-left: 10px;
   background-size: cover;
 }
 .node-label {
@@ -65,6 +65,14 @@ export default {
 }
 .node-start{
   background: url('../background/start.png') no-repeat;
+  background-size: cover;
+}
+.node-server{
+  background: url('../background/fuwu.png') no-repeat;
+  background-size: cover;
+}
+.node-device{
+  background: url('../background/shebei.png') no-repeat;
   background-size: cover;
 }
 .node-rect{
