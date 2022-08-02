@@ -1,52 +1,35 @@
 <template>
   <div>
-    <el-form ref="form" :model="form" label-width="80px">
-      <el-form-item label="活动名称">
-        <el-input v-model="form.name" />
-      </el-form-item>
-      <el-form-item label="指令类型">
-        <el-select v-model="form.type" placeholder="请选择类型">
-          <el-option label="设备" value="device" />
-          <el-option label="服务" value="server" />
+    <el-form ref="form" :model="form" label-width="110px">
+      <el-form-item label="请选择设备">
+        <el-select v-model="form.deviceId" placeholder="请选择设备" clearable @change="deviceChange">
+          <el-option
+            v-for="device in deviceList"
+            :key="device.deviceId"
+            :label="device.deviceName"
+            :value="device.deviceId"
+          />
         </el-select>
       </el-form-item>
-      <el-form-item v-if="form.type==='device'" label="请选择设备">
-        <el-col :span="11">
-          <el-date-picker v-model="form.date1" type="date" placeholder="选择日期" style="width: 100%;" />
-        </el-col>
-        <el-col class="line" :span="2">-</el-col>
-        <el-col :span="11">
-          <el-time-picker v-model="form.date2" placeholder="选择时间" style="width: 100%;" />
-        </el-col>
+      <el-form-item v-if="form.deviceId" label="请选择指令类型">
+        <el-select v-model="form.insType" placeholder="请选择指令类型" clearable @change="deviceInsTypeChange">
+          <el-option
+            v-for="ins in insTypeList"
+            :key="ins.value"
+            :label="ins.label"
+            :value="ins.value"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item else-if="form.type==='server'" label="请选择服务指令">
-        <el-col :span="11">
-          <el-date-picker v-model="form.date1" type="date" placeholder="选择日期" style="width: 100%;" />
-        </el-col>
-        <el-col class="line" :span="2">-</el-col>
-        <el-col :span="11">
-          <el-time-picker v-model="form.date2" placeholder="选择时间" style="width: 100%;" />
-        </el-col>
-      </el-form-item>
-      <el-form-item label="即时配送">
-        <el-switch v-model="form.delivery" />
-      </el-form-item>
-      <el-form-item label="活动性质">
-        <el-checkbox-group v-model="form.type">
-          <el-checkbox label="美食/餐厅线上活动" name="type" />
-          <el-checkbox label="地推活动" name="type" />
-          <el-checkbox label="线下主题活动" name="type" />
-          <el-checkbox label="单纯品牌曝光" name="type" />
-        </el-checkbox-group>
-      </el-form-item>
-      <el-form-item label="特殊资源">
-        <el-radio-group v-model="form.resource">
-          <el-radio label="线上品牌商赞助" />
-          <el-radio label="线下场地免费" />
-        </el-radio-group>
-      </el-form-item>
-      <el-form-item label="活动形式">
-        <el-input v-model="form.desc" type="textarea" />
+      <el-form-item v-if="form.insType && form.deviceId" label="请选择指令">
+        <el-select v-model="form.instruction" placeholder="请选择设备指令" clearable @change="deviceInsChange">
+          <el-option
+            v-for="ins in deviceInsOptions"
+            :key="ins.value"
+            :label="ins.name"
+            :value="ins.value"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="onSubmit">保存</el-button>
@@ -56,6 +39,14 @@
 </template>
 <script>
 import deviceApi from '@/views/business/device/api/index'
+import instuctionApi from '@/views/business/instruction/api/index'
+const typeList = [{
+  'label': '上行',
+  'value': 'up'
+}, {
+  'label': '下行',
+  'value': 'down'
+}]
 export default {
   name: 'StartNode',
   // inject接收值，类型为数组
@@ -73,15 +64,16 @@ export default {
   data() {
     return {
       deviceList: [],
+      serverInsList: [],
+      deviceInstructons: [],
+      deviceInsOptions: [],
+      serverInsOptions: [],
+      insTypeList: typeList,
       form: {
-        name: '',
-        region: '',
-        date1: '',
-        date2: '',
-        delivery: false,
-        type: [],
-        resource: '',
-        desc: ''
+        instruction: '',
+        objectType: 'device',
+        deviceId: '',
+        insType: ''
       }
     }
   },
@@ -90,21 +82,58 @@ export default {
       return this.laneId()
     }
   },
-  activated() {
-    this.getDevices()
-  },
-  mounted() {
+
+  async mounted() {
+    console.log('mounted')
+    await this.getDevices()
     const { properties } = this.nodeData
-    if (properties) {
-      this.form = Object.assign({}, this.form, properties)
-    }
+    this.$nextTick(function() {
+      if (properties) {
+        this.form = Object.assign({}, this.form, properties)
+        if (this.form.instruction) {
+          if (this.form.objectType === 'device') {
+            this.deviceInstructons = this.deviceList.filter(d => d.deviceId === this.form.deviceId)[0].instructions
+            this.deviceInsOptions = this.deviceInstructons.filter(i => i.insType === this.form.insType)
+          }
+        }
+      }
+    })
+
+    console.log('form' + this.form)
   },
   methods: {
-    getDevices() {
-      deviceApi.getDevices(this.laneId).then((rep) => {
-        console.log(rep)
-        // this.deviceList = rep.
-      })
+    async getDevices() {
+      const rep = await deviceApi.getDevices(this.laneId)
+      console.log('设备列表：' + rep)
+      if (rep.code === 200) {
+        this.deviceList = rep.data
+      }
+    },
+    async getServeIns() {
+      const rep = await instuctionApi.getServeIns()
+      if (rep.code === 200) {
+        this.serverInsList = rep.data
+      }
+    },
+    deviceChange(val) {
+      console.log('设备：' + val)
+      if (!val) {
+        this.form.deviceId = undefined
+        this.form.instruction = undefined
+      } else {
+        this.form.instruction === undefined
+        this.deviceInstructons = this.deviceList.filter(d => d.deviceId === val)[0].instructions
+      }
+    },
+    deviceInsTypeChange(val) {
+      this.form.instruction = undefined
+      this.deviceInsOptions = this.deviceInstructons.filter(i => i.insType === val)
+    },
+    deviceInsChange(val) {
+      console.log('指令：' + val)
+    },
+    serverInsChange(val) {
+      console.log('服务指令+' + val)
     },
 
     onSubmit() {
@@ -114,7 +143,8 @@ export default {
         ...this.form
       })
       console.log(6666, this.form)
-      this.lf.updateText(id, this.form.name)
+      const text = (this.form.deviceId ? 'DEVICE::' + this.form.deviceId + '::' : 'SERVICE::') + this.form.instruction
+      this.lf.updateText(id, text)
       this.$emit('onClose')
     }
   }

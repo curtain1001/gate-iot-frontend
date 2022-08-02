@@ -11,6 +11,7 @@ export default {
       default: () => undefined
     }
   },
+
   data() {
     return {
       name: '',
@@ -28,9 +29,15 @@ export default {
   methods: {
     findName(val) {
       if (val) {
-        getLane(val).then(rep => {
-          this.name = rep.data.laneName
-        })
+        const n = localStorage.getItem('lane::laneId::' + val)
+        if (!n || n === '') {
+          getLane(val).then(rep => {
+            this.name = rep.data.laneName
+            localStorage.setItem('lane::laneId::' + val, rep.data.laneName)
+          })
+        } else {
+          this.name = n
+        }
       }
     }
   }

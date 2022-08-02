@@ -69,14 +69,14 @@ export default function registerStart(lf) {
       getNodeStyle() {
         const style = super.getNodeStyle()
         // 根据 properties 中 statu 属性来设置颜色
-        const properties = this.properties
-        if (properties.statu === 'pass') {
-          style.stroke = 'green'
-        } else if (properties.statu === 'reject') {
-          style.stroke = 'red'
-        } else {
-          style.stroke = 'rgb(24, 125, 255)'
-        }
+        // const properties = this.properties
+        // if (properties.statu === 'pass') {
+        //   style.stroke = 'green'
+        // } else if (properties.statu === 'reject') {
+        //   style.stroke = 'red'
+        // } else {
+        //   style.stroke = 'rgb(24, 125, 255)'
+        // }
         return style
       }
       // 自定义锚点样式

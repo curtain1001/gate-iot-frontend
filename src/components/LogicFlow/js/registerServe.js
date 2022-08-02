@@ -40,6 +40,16 @@ export default function registerServe(lf) {
             width,
             height
           }),
+          h('text',
+            {
+              fill: '#000000',
+              fontSize: 12,
+              x: x - 12,
+              y: y + 4,
+              width: 50,
+              height: 25
+            },
+            '服务'),
           this.getLabelShape()
         ])
       }
@@ -47,6 +57,17 @@ export default function registerServe(lf) {
 
     // 自定义节点的model
     class Model extends RectNodeModel {
+      // 自定义节点形状属性
+      initNodeData(data) {
+        data.text = {
+          value: (data.text && data.text.value) || '',
+          x: data.x,
+          y: data.y + 55,
+          dragable: false,
+          editable: true
+        }
+        super.initNodeData(data)
+      }
       // 设置节点属性
       setAttributes() {
         this.width = 120
@@ -63,7 +84,6 @@ export default function registerServe(lf) {
         const circleOnlyAsTarget = {
           message: '',
           validate: (source, target) => {
-            const targetData = lf.getNodeDataById(target.id)
             const edgeData = lf.getGraphData().edges || []
             let curSourceId = null
             const targetIds = []
@@ -79,11 +99,7 @@ export default function registerServe(lf) {
                 targetIds.push(item.targetNodeId)
               }
             })
-
-            if (targetData.text && targetData.text.value === '开始') {
-              circleOnlyAsTarget.message = '开始节点不能作为连线的终点'
-              return false
-            } else if (curSourceId && curSourceId === target.id) {
+            if (curSourceId && curSourceId === target.id) {
               circleOnlyAsTarget.message = '无法连接'
               return false
             } else if (targetIds.includes(target.id)) {

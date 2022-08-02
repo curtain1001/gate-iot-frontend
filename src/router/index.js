@@ -180,10 +180,10 @@ export const dynamicRoutes = [
     path: '/business/flow-draw',
     component: Layout,
     hidden: true,
-    permissions: ['business:laneconfig:list'],
+    permissions: ['business:flow-draw:list'],
     children: [
       {
-        path: '',
+        path: 'index/:flowId(\\d+)',
         component: () => import('@/views/business/flow/drawFlow'),
         name: 'FlowDraw',
         meta: { title: '绘制流程', activeMenu: '/business/flow' }

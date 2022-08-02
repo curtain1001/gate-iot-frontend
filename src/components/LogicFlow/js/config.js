@@ -2,7 +2,6 @@ export const nodeList = [
   {
     text: '开始',
     type: 'start',
-    icon: '@/assets/icons/svg/daochu1024-15.svg',
     class: 'node-start'
   },
   {

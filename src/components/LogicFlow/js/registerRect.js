@@ -37,7 +37,7 @@ export default function registerUser(lf) {
               }
             })
 
-            if (targetData.text && targetData.text.value === '开始') {
+            if (targetData && targetData.type === 'start') {
               circleOnlyAsTarget.message = '开始节点不能作为连线的终点'
               return false
             } else if (curSourceId && curSourceId === target.id) {

@@ -11,6 +11,14 @@
       </div>
       <span class="node-label">{{ item.text }}</span>
     </div>
+    <div class="color-tip">
+      <div class="item">
+        <div class="board lane">车道: <span class="content"> {{ laneName }}</span></div>
+      </div>
+      <div class="item">
+        <div class="board flow">流程名称：<span class="content">{{ flowName }}</span></div>
+      </div>
+    </div>
   </div>
 </template>
 <script>
@@ -24,8 +32,25 @@ export default {
     lf: {
       type: Object,
       default: null
+    },
+    laneId: {
+      type: Number,
+      default: undefined
+    },
+    flowName: {
+      type: String,
+      default: ''
+    },
+    laneName: {
+      type: String,
+      default: ''
     }
 
+  },
+  data() {
+    return {
+
+    }
   },
   methods: {
     dragNode(item) {
@@ -36,13 +61,13 @@ export default {
   }
 }
 </script>
-<style>
+<style  scoped lang="scss">
 .node-panel {
   position: absolute;
-  top: 100px;
-  left: 50px;
+  top: 50px;
+  left: 25px;
   width: 70px;
-  padding: 20px 10px;
+  padding: 40px 10px;
   background-color: white;
   box-shadow: 0 0 10px 1px rgb(228, 224, 219);
   border-radius: 6px;
@@ -118,4 +143,39 @@ export default {
   background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAAVCAYAAAHeEJUAAAAABGdBTUEAALGPC/xhBQAAAvVJREFUOBGNVEFrE0EU/mY3bQoiFlOkaUJrQUQoWMGePLX24EH0IIoHKQiCV0G8iE1covgLiqA/QTzVm1JPogc9tIJYFaQtlhQxqYjSpunu+L7JvmUTU3AgmTfvffPNN++9WSA1DO182f6xwILzD5btfAoQmwL5KJEwiQyVbSVZ0IgRyV6PTpIJ81E5ZvqfHQR0HUOBHW4L5Et2kQ6Zf7iAOhTFAA8s0pEP7AXO1uAA52SbqGk6h/6J45LaLhO64ByfcUzM39V7ZiAdS2yCePPEIQYvTUHqM/n7dgQNfBKWPjpF4ISk8q3J4nB11qw6X8l+FsF3EhlkEMfrjIer3wJTLwS2aCNcj4DbGxXTw00JmAuO+Ni6bBxVUCvS5d9aa04+so4pHW5jLTywuXAL7jJ+D06sl82Sgl2JuVBQn498zkc2bGKxULHjCnSMadBKYDYYHAtsby1EQ5lNGrQd4Y3v4Zo0XdGEmDno46yCM9Tk+RiJmUYHS/aXHPNTcjxcbTFna000PFJHIVZ5lFRqRpJWk9/+QtlOUYJj9HG5pVFEU7zqIYDVsw2s+AJaD8wTd2umgSCCyUxgGsS1Y6TBwXQQTFuZaHcd8gAGioE90hlsY+wMcs30RduYtxanjMGal8H5dMW67dmT1JFtYUEe8LiQLRsPZ6IIc7A4J5tqco3T0pnv/4u0kyzrYUq7gASuEyI8VXKvB9Odytv6jS/PNaZBln0nioJG/AVQRZvApOdhjj3Jt8QC8Im09SafwdBdvIpztpxWxpeKCC+EsFdS8DCyuCn2munFpL7ctHKp+Xc5cMybeIyMAN33SPL3ZR9QV1XVwLyzHm6Iv0/yeUuUb7PPlZC4D4HZkeu6dpF4v9j9MreGtMbxMMRLIcjJic9yHi7WQ3yVKzZVWUr5UrViJvn1FfUlwe/KYVfYyWRLSGNu16hR01U9IacajXPei0wx/5BqgInvJN+MMNtNme7ReU9SBbgntovn0kKHpFg7UogZvaZiOue/q1SBo9ktHzQAAAAASUVORK5CYII=) center center no-repeat;
   cursor: grab;
 }
+
+.color-tip {
+    position: absolute;
+    top: -40px;
+    right: -30px;
+    transform: translateX(100%);
+    width: 300px;
+    height: 40px;
+    background-color: #fff;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 30%);
+    border-radius: 5px;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    .item {
+      .board,
+      .content {
+        display: inline-block;
+      }
+      .board {
+        height: 10px;
+      }
+      .flow {
+        width:200px;
+      }
+      .lane {
+        width: 80px;
+      }
+      .content {
+        font-size: 14px;
+        padding-left: 5px;
+      }
+    }
+  }
 </style>

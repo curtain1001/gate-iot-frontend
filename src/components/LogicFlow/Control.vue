@@ -1,6 +1,7 @@
 <template>
   <div>
     <el-button-group>
+      <el-button type="plain" size="small" :style="{ backgroundColor: senseClass }" @click="controlSense">框选</el-button>
       <el-button type="plain" size="small" @click="zoomIn">放大</el-button>
       <el-button type="plain" size="small" @click="zoomOut">缩小</el-button>
       <el-button type="plain" size="small" @click="zoomReset">大小适应</el-button>
@@ -10,6 +11,8 @@
       <el-button type="plain" size="small" :disabled="redoDisable" @click="redo">下一步(ctrl+y)</el-button>
       <el-button type="plain" size="small" @click="download">下载图片</el-button>
       <el-button type="plain" size="small" @click="catData">查看数据</el-button>
+      <el-button type="plain" size="small" @click="saveData">保存数据</el-button>
+      <el-button type="plain" size="small" @click="goBack">返回</el-button>
     </el-button-group>
   </div>
 </template>
@@ -31,7 +34,9 @@ export default {
       undoDisable: true,
       redoDisable: true,
       graphData: null,
-      dataVisible: false
+      dataVisible: false,
+      senseClass: '',
+      sense: false
     }
   },
   mounted() {
@@ -41,6 +46,25 @@ export default {
     })
   },
   methods: {
+    controlSense() {
+      if (this.sense) {
+        this.closeSelectionSense()
+      } else {
+        this.openSelectionSense()
+      }
+    },
+
+    openSelectionSense() {
+      this.lf.extension.selectionSelect.openSelectionSelect()
+      this.lf.extension.selectionSelect.setSelectionSense(false, true)
+      this.senseClass = '#b3d8ff'
+      this.sense = true
+    },
+    closeSelectionSense() {
+      this.lf.extension.selectionSelect.closeSelectionSelect()
+      this.senseClass = ''
+      this.sense = false
+    },
     zoomIn() {
       this.lf.zoom(true)
     },
@@ -68,7 +92,14 @@ export default {
     },
     catData() {
       this.$emit('catData')
+    },
+    saveData() {
+      this.$emit('saveData')
+    },
+    goBack() {
+      this.$emit('goBack')
     }
+
   }
 }
 </script>

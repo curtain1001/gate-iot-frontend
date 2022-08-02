@@ -19,7 +19,8 @@ export default function registerDevice(lf) {
             fill: style.stroke,
             d:
                 'M864 64H160a96 96 0 0 0-96 96v576a96 96 0 0 0 96 96h320v64H256a32 32 0 0 0 0 64h512a32 32 0 0 0 0-64h-224v-64h320a96 96 0 0 0 96-96V160a96 96 0 0 0-96-96zM160 128h704a32 32 0 0 1 32 32v448H128V160a32 32 0 0 1 32-32z m736 608a32 32 0 0 1-32 32H160a32 32 0 0 1-32-32v-64h768v64z'
-          })
+          }
+          )
         )
       }
       /**
@@ -40,6 +41,16 @@ export default function registerDevice(lf) {
             width,
             height
           }),
+          h('text',
+            {
+              fill: '#000000',
+              fontSize: 12,
+              x: x - 12,
+              y: y + 4,
+              width: 50,
+              height: 25
+            },
+            '设备'),
           this.getLabelShape()
         ])
       }
@@ -47,6 +58,17 @@ export default function registerDevice(lf) {
 
     // 自定义节点的model
     class Model extends RectNodeModel {
+      // 自定义节点形状属性
+      initNodeData(data) {
+        data.text = {
+          value: (data.text && data.text.value) || '',
+          x: data.x,
+          y: data.y + 55,
+          dragable: false,
+          editable: true
+        }
+        super.initNodeData(data)
+      }
       // 设置节点属性
       setAttributes() {
         this.width = 120
@@ -62,7 +84,6 @@ export default function registerDevice(lf) {
         const circleOnlyAsTarget = {
           message: '',
           validate: (source, target) => {
-            const targetData = lf.getNodeDataById(target.id)
             const edgeData = lf.getGraphData().edges || []
             let curSourceId = null
             const targetIds = []
@@ -79,10 +100,7 @@ export default function registerDevice(lf) {
               }
             })
 
-            if (targetData.text && targetData.text.value === '开始') {
-              circleOnlyAsTarget.message = '开始节点不能作为连线的终点'
-              return false
-            } else if (curSourceId && curSourceId === target.id) {
+            if (curSourceId && curSourceId === target.id) {
               circleOnlyAsTarget.message = '无法连接'
               return false
             } else if (targetIds.includes(target.id)) {

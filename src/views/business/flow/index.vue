@@ -1,14 +1,8 @@
 <template>
   <div class="app-container">
     <el-form v-show="showSearch" ref="queryForm" :model="queryParams" :inline="true" label-width="68px">
-      <el-form-item label="车道id" prop="laneId">
-        <el-input
-          v-model="queryParams.laneId"
-          placeholder="请输入车道id"
-          clearable
-          size="small"
-          @keyup.enter.native="handleQuery"
-        />
+      <el-form-item label="车道" prop="laneId">
+        <el-cascader v-model="queryParams.laneId" :show-all-levels="false" :props="{emitPath:false,value:'value',label:'label',children:'children'}" :options="laneList" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="流程名称" prop="flowName">
         <el-input
@@ -74,9 +68,17 @@
     <el-table v-loading="loading" :data="flowList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="序号" align="center" prop="flowId" />
-      <el-table-column label="车道id" align="center" prop="laneId" />
+      <el-table-column label="车道" align="center" prop="laneId">
+        <template slot-scope="scope">
+          <GetLaneName v-model="scope.row.laneId" />
+        </template>
+      </el-table-column>
       <el-table-column label="流程名称" align="center" prop="flowName" />
-      <el-table-column label="流程内容" align="center" prop="content" />
+      <el-table-column label="流程内容" align="center" prop="content" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <span>{{ scope.row.content }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
@@ -117,7 +119,14 @@
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="车道号" prop="laneId">
-          <el-cascader v-model="form.laneId" :props="{emitPath:false,value:'value',label:'label',children:'children'}" :options="laneList" clearable />
+          <el-cascader
+            ref="cascader"
+            v-model="form.laneId"
+            :show-all-levels="false"
+            :props="{emitPath:false,value:'value',label:'label',children:'children'}"
+            :options="laneList"
+            clearable
+          />
         </el-form-item>
         <el-form-item label="流程名称" prop="flowName">
           <el-input v-model="form.flowName" placeholder="请输入流程名称" />
@@ -141,9 +150,13 @@
 import router from '@/router'
 import api from './api/index'
 import { laneAll } from '../area/api/index'
+import { getLane } from '@/views/business/lane/api/index.js'
+import GetLaneName from '@/views/business/lane/component/GetLaneName'
 export default {
   name: 'Flow',
-
+  components: {
+    GetLaneName
+  },
   data() {
     return {
       laneList: [],
@@ -180,25 +193,20 @@ export default {
         pageNum: 1,
         pageSize: 10,
         laneId: null,
-
         flowName: null,
-
         content: null
 
       },
       // 表单参数
-      form: {},
+      form: {
+        laneId: 1,
+        flowName: null,
+        content: null
+      },
       // 表单校验
       rules: {
       }
     }
-  },
-  activated() {
-    const params = this.$route.query
-    if (params && params.laneId) {
-      this.queryParams.laneId = params.laneId
-    }
-    console.log(params)
   },
   created() {
     this.getList()
@@ -226,6 +234,13 @@ export default {
         this.total = response.total
         this.loading = false
       })
+    },
+    getLaneName(laneId) {
+      if (laneId) {
+        getLane(laneId).then(rep => {
+          return rep.data.laneName
+        })
+      }
     },
     // 取消按钮
     cancel() {
@@ -276,18 +291,21 @@ export default {
       const flowId = row.flowId || this.ids
       api.getFlow(flowId).then(response => {
         this.form = response.data
+        this.form.laneId = String(this.form.laneId)
+        console.log(this.form)
         this.open = true
         this.title = '修改【请填写功能名称】'
       })
     },
     handleDraw(row) {
-      router.push({ name: 'FlowDraw', params: { flowRow: JSON.stringify(row) }})
+      router.replace(`/business/flow-draw/index/${row.flowId}`)
     },
     /** 提交按钮 */
     submitForm() {
       this.$refs['form'].validate(valid => {
         if (valid) {
           if (this.form.flowId != null) {
+            this.form.laneId = Number(this.form.laneId)
             api.updateFlow(this.form).then(response => {
               this.$modal.msgSuccess('修改成功')
               this.open = false
