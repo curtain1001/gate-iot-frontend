@@ -12,6 +12,7 @@ import store from './store'
 import router from './router'
 import directive from './directive' // directive
 import plugins from './plugins' // plugins
+import './assets/js/iconfont' // plugins
 import { download } from '@/utils/request'
 
 import './assets/icons' // icon

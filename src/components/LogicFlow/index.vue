@@ -56,6 +56,9 @@ import registerRect from './js/registerRect'
 import registerStart from './js/registerStart'
 import registerDevice from './js/registerDevice'
 import registerServe from './js/registerServe'
+import registerOr from './js/registerOr'
+import registerAnd from './js/registerAnd'
+import registerPolyline from './js/registerPolyline'
 import PropertyDialog from './PropertySetting/PropertyDialog'
 import NodePanel from './NodePanel'
 import Control from './Control'
@@ -198,7 +201,7 @@ export default {
         edgeText: {
           color: '#000000',
           background: {
-            fill: '#f7f9ff'
+            fill: '#FFFFFF'
           }
         }
       })
@@ -208,6 +211,9 @@ export default {
       registerStart(this.lf)
       registerDevice(this.lf)
       registerServe(this.lf)
+      registerOr(this.lf)
+      registerAnd(this.lf)
+      registerPolyline(this.lf)
       /*
        * 自定义右击菜单
        * 注意：最新版修改为 lf.setMenuConfig() !!!
@@ -259,7 +265,9 @@ export default {
       this.lf.on('node:click', ({ data }) => {
         console.log('node:click', data)
         this.clickNode = data
-        this.dialogVisible = true
+        if (data.type !== 'or' && data.type !== 'and') {
+          this.dialogVisible = true
+        }
       })
       // 节点不允许建立连接
       this.lf.on('connection:not-allowed', (data) => {
@@ -271,8 +279,8 @@ export default {
       // 连接点击
       this.lf.on('edge:click', ({ data }) => {
         console.log('edge:click', data)
-        // this.clickNode = data
-        // this.dialogVisible = true
+        this.clickNode = data
+        this.dialogVisible = true
       })
       this.lf.on('edge:add', ({ data }) => {
         console.log('edge:add', data)
@@ -297,17 +305,6 @@ export default {
         console.log('blank:mouseup' + e)
       })
     },
-
-    mouseDownPlus(e, attributes) {
-      e.stopPropagation()
-      console.log('mouseDownPlus', e, attributes)
-    },
-    hideAddPanel() {
-      this.showAddPanel = false
-      this.addPanelStyle.top = 0
-      this.addPanelStyle.left = 0
-      this.addClickNode = null
-    },
     getGraphData() {
       // lf.getGraphData() 获取流程绘图数据
       return this.lf.getGraphData()
@@ -315,6 +312,7 @@ export default {
     getData() {
       const data = this.lf.getGraphData()
       console.log(JSON.stringify(data))
+      return data
     },
     closeDialog() {
       this.dialogVisible = false

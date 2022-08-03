@@ -76,8 +76,8 @@ export default function registerDevice(lf) {
 
         // 设置自定义锚点
         this.anchorsOffset = [
-          [120 / 2, 0],
-          [-120 / 2, 0]
+          [0, this.height / 2],
+          [0, -this.height / 2]
         ]
 
         // 自定义连线规则

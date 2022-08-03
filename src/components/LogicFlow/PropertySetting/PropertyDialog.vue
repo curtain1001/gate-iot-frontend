@@ -13,6 +13,12 @@
       @onClose="handleClose"
     />
     <StartNode
+      v-else-if="nodeData.type === start"
+      :node-data="nodeData"
+      :lf="lf"
+      @onClose="handleClose"
+    />
+    <EdgeNode
       v-else
       :node-data="nodeData"
       :lf="lf"
@@ -25,6 +31,7 @@
 import StartNode from './StartNode.vue'
 import DeviceNode from './DeviceNode.vue'
 import ServerNode from './ServerNode.vue'
+import EdgeNode from './EdgeNode.vue'
 
 export default {
   name: 'PropertyDialog',
@@ -32,7 +39,8 @@ export default {
     // CommonProperty,
     DeviceNode,
     ServerNode,
-    StartNode
+    StartNode,
+    EdgeNode
   },
   props: {
     nodeData: {

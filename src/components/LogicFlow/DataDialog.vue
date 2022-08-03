@@ -1,6 +1,6 @@
 <template>
   <div>
-    <json-viewer :value="graphData" />
+    <json-viewer :value="graphData" :boxed="true" />
   </div>
 </template>
 <script>

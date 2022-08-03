@@ -64,6 +64,10 @@ export default function registerStart(lf) {
         }
         super.initNodeData(data)
         this.r = 30
+        // 设置自定义锚点
+        this.anchorsOffset = [
+          [0, 30]
+        ]
       }
       // 自定义节点样式属性
       getNodeStyle() {

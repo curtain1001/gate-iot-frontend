@@ -75,7 +75,7 @@ export default function registerEnd(lf) {
 
         // 设置自定义锚点
         this.anchorsOffset = [
-          [-size, 0]
+          [0, -size]
         ]
 
         // 自定义连线规则
