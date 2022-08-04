@@ -1,5 +1,5 @@
 <template>
-  <LogicFlow v-if="flowShow" :flow-row="flowRow" :node-data="nodeData" :lane-name="laneName" @saveData="val=>saveData(val)" />
+  <LogicFlow v-if="flowShow" ref="logicFlow" :flow-row="flowRow" :node-data="nodeData" :lane-name="laneName" @saveData="val=>saveData(val)" />
 </template>
 
 <script>
@@ -20,7 +20,7 @@ export default {
       flowShow: false
     }
   },
-  async created() {
+  async activated() {
     const params = this.$route.params
     if (params && params.flowId) {
       this.flowId = params.flowId
@@ -29,6 +29,7 @@ export default {
     const rep = await this.getFlowRow()
     if (rep.code === 200) {
       this.flowRow = rep.data
+      console.log('flowRow:' + this.flowRow)
       this.nodeData = JSON.parse(this.flowRow.content)
     }
     this.$nextTick(() => {
@@ -37,6 +38,17 @@ export default {
     await this.getLaneName()
   },
   methods: {
+    init() {
+      flowApi.getFlow(this.flowId).then(rep => {
+        if (rep.code === 200) {
+          this.flowRow = rep.data
+          console.log('flowRow:' + this.flowRow)
+          this.nodeData = JSON.parse(this.flowRow.content)
+          this.$refs['logicFlow'].renderFlow()
+        }
+      })
+    },
+
     getFlowRow() {
       return flowApi.getFlow(this.flowId)
     },
@@ -50,13 +62,11 @@ export default {
       }
     },
     saveData(val) {
-      const flow = {
-        flowId: this.flowId,
-        content: val
-      }
-      flowApi.updateFlow(flow).then((rep) => {
+      this.flowRow.content = val
+      flowApi.updateFlow(this.flowRow).then((rep) => {
         if (rep.code === 200) {
           this.$modal.msgSuccess(rep.msg)
+          this.init()
         } else {
           this.$modal.msgError('保存失败：' + rep.msg)
         }

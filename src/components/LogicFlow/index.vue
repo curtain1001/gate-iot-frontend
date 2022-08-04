@@ -322,7 +322,7 @@ export default {
       this.dataVisible = true
     },
     saveData() {
-      this.$emit('saveData', JSON.stringify(this.lf.getGraphData()))
+      this.$emit('saveData', this.lf.getGraphData())
     },
     goBack() {
       router.replace(`/business/flow`)

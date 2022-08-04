@@ -1,8 +1,8 @@
 <template>
   <div>
     <el-form ref="form" :model="form" label-width="110px">
-      <el-form-item label="指令类型">
-        <el-select v-model="form.objectType" placeholder="请选择类型" @change="objectTypeChange">
+      <el-form-item label="设备类型">
+        <el-select v-model="form.objectType" placeholder="请选择设备类型" @change="objectTypeChange">
           <el-option
             v-for="type in objectTypeList"
             :key="type.value"
@@ -21,20 +21,20 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item v-if="form.objectType==='device' && form.deviceId" label="请选择指令">
-        <el-select v-model="form.instruction" placeholder="请选择设备指令" clearable @change="deviceInsChange">
+      <el-form-item label="请选择指令类型">
+        <el-select v-model="form.insType" placeholder="请选择指令类型" clearable @change="insTypeChange">
           <el-option
-            v-for="ins in deviceInsOptions"
+            v-for="ins in instructionTypeList"
             :key="ins.value"
-            :label="ins.name"
+            :label="ins.label"
             :value="ins.value"
           />
         </el-select>
       </el-form-item>
-      <el-form-item v-if="form.objectType==='server'" label="请选择服务指令">
-        <el-select v-model="form.instruction" placeholder="请选择服务指令" clearable @change="serverInsChange">
+      <el-form-item v-if="(form.objectType==='server'&&form.insType) || (form.objectType==='device'&&form.insType&&form.deviceId)" label="请选择指令">
+        <el-select v-model="form.instruction" placeholder="请选择设备指令" clearable @change="insChange">
           <el-option
-            v-for="ins in serverInsOptions"
+            v-for="ins in insOptions"
             :key="ins.value"
             :label="ins.name"
             :value="ins.value"
@@ -57,6 +57,13 @@ const typeList = [{
   'label': '服务',
   'value': 'server'
 }]
+const insTypeList = [{
+  'label': '上行',
+  'value': 'up'
+}, {
+  'label': '下行',
+  'value': 'down'
+}]
 export default {
   name: 'StartNode',
   // inject接收值，类型为数组
@@ -75,14 +82,14 @@ export default {
     return {
       deviceList: [],
       serverInsList: [],
-      deviceInsOptions: [],
-      serverInsOptions: [],
+      insOptions: [],
       objectTypeList: typeList,
+      instructionTypeList: insTypeList,
       form: {
         instruction: '',
+        insType: '',
         objectType: '',
-        deviceId: '',
-        insType: 'up'
+        deviceId: ''
       }
     }
   },
@@ -106,9 +113,9 @@ export default {
         if (this.form.instruction) {
           if (this.form.objectType === 'device') {
             const instructions = this.deviceList.filter(d => d.deviceId === this.form.deviceId)[0].instructions
-            this.deviceInsOptions = instructions.filter(i => i.insType === this.insType)
+            this.insOptions = instructions.filter(i => i.insType === this.form.insType)
           } else if (this.form.objectType === 'server') {
-            this.serverInsOptions = this.serverInsList.filter(x => x.insType === this.insType)
+            this.insOptions = this.serverInsList.filter(x => x.insType === this.form.insType)
           }
         }
       }
@@ -117,6 +124,18 @@ export default {
     console.log('form' + this.form)
   },
   methods: {
+    getIns() {
+      this.form.instruction = ''
+      if (this.form.objectType && this.form.insType) {
+        if (this.form.objectType === 'device' && this.form.deviceId) {
+          const instructions = this.deviceList.filter(d => d.deviceId === this.form.deviceId)[0].instructions
+          this.insOptions = instructions.filter(i => i.insType === this.form.insType)
+        } else if (this.form.objectType === 'server') {
+          this.insOptions = this.serverInsList.filter(x => x.insType === this.form.insType)
+        }
+      }
+    },
+
     async getDevices() {
       const rep = await deviceApi.getDevices(this.laneId)
       console.log('设备列表：' + rep)
@@ -131,29 +150,26 @@ export default {
       }
     },
     objectTypeChange(val) {
-      console.log('类型：' + val)
+      console.log('设备类型：' + val)
       this.form.deviceId = undefined
       this.form.instruction === undefined
-      if (val === 'server') {
-        this.serverInsOptions = this.serverInsList.filter(x => x.insType === this.insType)
-      }
+      this.getIns()
+    },
+    insTypeChange(val) {
+      console.log('指令类型：' + val)
+      this.getIns()
     },
     deviceChange(val) {
       console.log('设备：' + val)
-      if (!val) {
-        this.form.deviceId = undefined
-        this.form.instruction = undefined
+      this.form.instruction = undefined
+      if (val) {
+        this.getIns()
       } else {
-        this.form.instruction === undefined
-        const instructions = this.deviceList.filter(d => d.deviceId === val)[0].instructions
-        this.deviceInsOptions = instructions.filter(i => i.insType === this.insType)
+        this.insOptions = []
       }
     },
-    deviceInsChange(val) {
+    insChange(val) {
       console.log('指令：' + val)
-    },
-    serverInsChange(val) {
-      console.log('服务指令+' + val)
     },
 
     onSubmit() {

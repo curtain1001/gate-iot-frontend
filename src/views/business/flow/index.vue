@@ -79,6 +79,7 @@
           <span>{{ scope.row.content }}</span>
         </template>
       </el-table-column>
+      <el-table-column label="版本号" align="center" prop="version" />
       <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
@@ -93,9 +94,17 @@
             v-hasPermi="['business:flow:edit']"
             size="mini"
             type="text"
-            icon="el-icon-edit"
+            icon="el-icon-s-open"
             @click="handleDraw(scope.row)"
           >绘制</el-button>
+          <el-button
+            v-hasPermi="['business:flow:edit']"
+            size="mini"
+            type="text"
+            icon="el-icon-s-tools"
+            @click="deploy(scope.row)"
+          >部署</el-button>
+
           <el-button
             v-hasPermi="['business:flow:remove']"
             size="mini"
@@ -115,7 +124,7 @@
       @pagination="getList"
     />
 
-    <!-- 添加或修改【请填写功能名称】对话框 -->
+    <!-- 添加或修改流程对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="车道号" prop="laneId">
@@ -147,7 +156,7 @@
 </template>
 
 <script>
-import router from '@/router'
+// import router from '@/router'
 import api from './api/index'
 import { laneAll } from '../area/api/index'
 import { getLane } from '@/views/business/lane/api/index.js'
@@ -172,7 +181,7 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
-      // 【请填写功能名称】表格数据
+      // 流程表格数据
       flowList: [],
       // 弹出层标题
       title: '',
@@ -226,7 +235,7 @@ export default {
       })
     },
 
-    /** 查询【请填写功能名称】列表 */
+    /** 查询流程列表 */
     getList() {
       this.loading = true
       api.listFlow(this.queryParams).then(response => {
@@ -253,11 +262,6 @@ export default {
         flowId: null,
         laneId: null,
         flowName: null,
-        content: null,
-        createBy: null,
-        createTime: null,
-        updateBy: null,
-        updateTime: null,
         remark: null
 
       }
@@ -283,7 +287,7 @@ export default {
     handleAdd() {
       this.reset()
       this.open = true
-      this.title = '添加【请填写功能名称】'
+      this.title = '添加流程'
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
@@ -294,11 +298,12 @@ export default {
         this.form.laneId = String(this.form.laneId)
         console.log(this.form)
         this.open = true
-        this.title = '修改【请填写功能名称】'
+        this.title = '修改流程'
       })
     },
     handleDraw(row) {
-      router.replace(`/business/flow-draw/index/${row.flowId}`)
+      this.$router.replace({ path: `/business/flow-draw/index/${row.flowId}` })
+      // router.replace()
     },
     /** 提交按钮 */
     submitForm() {
@@ -324,7 +329,7 @@ export default {
     /** 删除按钮操作 */
     handleDelete(row) {
       const flowIds = row.flowId || this.ids
-      this.$confirm('是否确认删除【请填写功能名称】编号为"' + flowIds + '"的数据项?', '警告', {
+      this.$confirm('是否确认删除流程编号为"' + flowIds + '"的数据项?', '警告', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
@@ -335,10 +340,25 @@ export default {
         this.$modal.msgSuccess('删除成功')
       })
     },
+    /**
+     * 部署流程
+     */
+    deploy(row) {
+      this.$confirm('是否确认部署流程名称为"' + row.flowName + ';版本为' + row.version + '的数据项?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(function() {
+        return api.deploy(row.flowId, row.version)
+      }).then(() => {
+        this.getList()
+        this.$modal.msgSuccess('部署成功')
+      })
+    },
     /** 导出按钮操作 */
     handleExport() {
       const queryParams = this.queryParams
-      this.$confirm('是否确认导出所有【请填写功能名称】数据项?', '警告', {
+      this.$confirm('是否确认导出所有流程数据项?', '警告', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'

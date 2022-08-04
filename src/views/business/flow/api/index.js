@@ -1,7 +1,7 @@
 import request from '@/utils/request'
 
 export default {
-// 查询【请填写功能名称】列表
+// 查询流程列表
   listFlow(query) {
     return request({
       url: '/business/flow/list',
@@ -10,7 +10,7 @@ export default {
     })
   },
 
-  // 查询【请填写功能名称】详细
+  // 查询流程详细
   getFlow(flowId) {
     return request({
       url: '/business/flow/' + flowId,
@@ -18,7 +18,7 @@ export default {
     })
   },
 
-  // 新增【请填写功能名称】
+  // 新增流程
   addFlow(data) {
     return request({
       url: '/business/flow',
@@ -27,7 +27,7 @@ export default {
     })
   },
 
-  // 修改【请填写功能名称】
+  // 修改流程
   updateFlow(data) {
     return request({
       url: '/business/flow',
@@ -36,15 +36,22 @@ export default {
     })
   },
 
-  // 删除【请填写功能名称】
+  // 删除流程
   delFlow(flowId) {
     return request({
       url: '/business/flow/' + flowId,
       method: 'delete'
     })
   },
+  // 部署流程
+  deploy(flowId, version) {
+    return request({
+      url: `/business/flow/deploy/${flowId}/${version}`,
+      method: 'put'
+    })
+  },
 
-  // 导出【请填写功能名称】
+  // 导出流程
   exportFlow(query) {
     return request({
       url: '/business/flow/export',

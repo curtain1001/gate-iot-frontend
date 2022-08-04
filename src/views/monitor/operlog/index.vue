@@ -163,7 +163,9 @@
             <el-form-item label="操作方法：">{{ form.method }}</el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item label="请求参数：">{{ form.operParam }}</el-form-item>
+            <el-form-item label="请求参数：">
+              <JsonViewer :value="toJSON(form.operParam)" :boxed="true" />
+            </el-form-item>
           </el-col>
           <el-col :span="24">
             <el-form-item label="返回参数：">{{ form.jsonResult }}</el-form-item>
@@ -190,10 +192,12 @@
 </template>
 
 <script>
+import JsonViewer from 'vue-json-viewer'
 import { list, delOperlog, cleanOperlog } from '@/api/monitor/operlog'
 
 export default {
   name: 'Operlog',
+  components: { JsonViewer },
   dicts: ['sys_oper_type', 'sys_common_status'],
   data() {
     return {
@@ -232,6 +236,23 @@ export default {
     this.getList()
   },
   methods: {
+    toJSON(str) {
+      if (typeof str === 'string') {
+        try {
+          var obj = JSON.parse(str)
+          if (typeof obj === 'object' && obj) {
+            return obj
+          } else {
+            return str
+          }
+        } catch (e) {
+          console.log('error:' + str + '!!!' + e)
+          return str
+        }
+      }
+      console.log('It is not a string!')
+    },
+
     /** 查询登录日志 */
     getList() {
       this.loading = true

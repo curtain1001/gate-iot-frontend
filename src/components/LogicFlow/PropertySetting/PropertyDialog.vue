@@ -13,13 +13,19 @@
       @onClose="handleClose"
     />
     <StartNode
-      v-else-if="nodeData.type === start"
+      v-else-if="nodeData.type === 'start'"
       :node-data="nodeData"
       :lf="lf"
       @onClose="handleClose"
     />
     <EdgeNode
-      v-else
+      v-else-if="nodeData.type ==='polyline'"
+      :node-data="nodeData"
+      :lf="lf"
+      @onClose="handleClose"
+    />
+    <EndNode
+      v-else-if="nodeData.type ==='end'"
       :node-data="nodeData"
       :lf="lf"
       @onClose="handleClose"
@@ -32,6 +38,7 @@ import StartNode from './StartNode.vue'
 import DeviceNode from './DeviceNode.vue'
 import ServerNode from './ServerNode.vue'
 import EdgeNode from './EdgeNode.vue'
+import EndNode from './EndNode.vue'
 
 export default {
   name: 'PropertyDialog',
@@ -40,7 +47,8 @@ export default {
     DeviceNode,
     ServerNode,
     StartNode,
-    EdgeNode
+    EdgeNode,
+    EndNode
   },
   props: {
     nodeData: {
