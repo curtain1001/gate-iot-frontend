@@ -10,6 +10,16 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
+
+      <el-form-item label="请求地址" prop="operUrl">
+        <el-input
+          v-model="queryParams.operUrl"
+          placeholder="请输入请求地址"
+          clearable
+          style="width: 240px;"
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
       <el-form-item label="操作人员" prop="operName">
         <el-input
           v-model="queryParams.operName"
@@ -111,6 +121,7 @@
         </template>
       </el-table-column>
       <el-table-column label="请求方式" align="center" prop="requestMethod" />
+      <el-table-column label="请求地址" align="center" prop="operUrl" width="180" :show-overflow-tooltip="true" />
       <el-table-column label="操作人员" align="center" prop="operName" width="100" :show-overflow-tooltip="true" sortable="custom" :sort-orders="['descending', 'ascending']" />
       <el-table-column label="操作地址" align="center" prop="operIp" width="130" :show-overflow-tooltip="true" />
       <el-table-column label="操作地点" align="center" prop="operLocation" :show-overflow-tooltip="true" />
@@ -168,7 +179,9 @@
             </el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item label="返回参数：">{{ form.jsonResult }}</el-form-item>
+            <el-form-item label="返回参数：">
+              <JsonViewer :value="toJSON(form.jsonResult)" :boxed="true" />
+            </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="操作状态：">

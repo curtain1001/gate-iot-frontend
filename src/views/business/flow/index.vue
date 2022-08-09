@@ -76,11 +76,28 @@
       <el-table-column label="流程名称" align="center" prop="flowName" />
       <el-table-column label="流程内容" align="center" prop="content" :show-overflow-tooltip="true">
         <template slot-scope="scope">
-          <span>{{ scope.row.content }}</span>
+          <el-button type="primary" plain @click="dataView(scope.row.content)">点击查看</el-button>
         </template>
       </el-table-column>
-      <el-table-column label="版本号" align="center" prop="version" />
-      <el-table-column label="备注" align="center" prop="remark" />
+      <el-table-column label="版本号" align="center" prop="version">
+        <template slot-scope="scope">
+          <el-tooltip
+            v-if="checkDeploy(scope.row)"
+            effect="dark"
+            :content="versionTooltip(scope.row)"
+            placement="top"
+          >
+            <span><i class="el-icon-question" />{{ scope.row.version }}</span>
+          </el-tooltip>
+          <span v-else>{{ scope.row.version }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="备注" align="center" prop="remark" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <el-tag v-if="isDeploy(scope.row)">已部署</el-tag>
+          {{ scope.row.remark }}
+        </template>
+      </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
@@ -102,9 +119,10 @@
             size="mini"
             type="text"
             icon="el-icon-s-tools"
+            :disabled="checkVersion(scope.row)"
             @click="deploy(scope.row)"
-          >部署</el-button>
-
+          >
+            部署</el-button>
           <el-button
             v-hasPermi="['business:flow:remove']"
             size="mini"
@@ -152,10 +170,20 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+
+    <!-- 数据查看面板 -->
+    <el-dialog
+      title="数据"
+      :visible.sync="dataVisible"
+      width="50%"
+    >
+      <DataDialog :graph-data="jsonData" />
+    </el-dialog>
   </div>
 </template>
 
 <script>
+import DataDialog from '@/components/JsonDataDialog/index'
 // import router from '@/router'
 import api from './api/index'
 import { laneAll } from '../area/api/index'
@@ -164,7 +192,7 @@ import GetLaneName from '@/views/business/lane/component/GetLaneName'
 export default {
   name: 'Flow',
   components: {
-    GetLaneName
+    GetLaneName, DataDialog
   },
   data() {
     return {
@@ -183,6 +211,7 @@ export default {
       total: 0,
       // 流程表格数据
       flowList: [],
+      flowDeployList: [],
       // 弹出层标题
       title: '',
       // 是否显示弹出层
@@ -197,6 +226,7 @@ export default {
       updateByOptions: [],
       // 更新时间字典
       updateTimeOptions: [],
+      dataVisible: false,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -206,6 +236,7 @@ export default {
         content: null
 
       },
+      jsonData: {},
       // 表单参数
       form: {
         laneId: 1,
@@ -217,16 +248,22 @@ export default {
       }
     }
   },
-  created() {
-    this.getList()
-    this.getLaneList()
+  async created() {
     const params = this.$route.query
     if (params && params.laneId) {
       this.queryParams.laneId = params.laneId
     }
     console.log(params)
+    await this.getDeployAll()
+    await this.getLaneList()
+    await this.getList()
   },
   methods: {
+    dataView(content) {
+      this.jsonData = content
+      this.dataVisible = true
+    },
+
     getLaneList() {
       laneAll().then((rep) => {
         if (rep.code === 200) {
@@ -234,7 +271,6 @@ export default {
         }
       })
     },
-
     /** 查询流程列表 */
     getList() {
       this.loading = true
@@ -250,6 +286,66 @@ export default {
           return rep.data.laneName
         })
       }
+    },
+    getDeployAll() {
+      api.getDeployAll().then(rep => {
+        if (rep.code === 200) {
+          this.flowDeployList = rep.data
+        }
+      })
+    },
+    /**
+     * 校验部署流程的版本
+     */
+    checkVersion(row) {
+      console.log(row)
+      if (!this.flowDeployList && this.flowDeployList.length < 1) {
+        return false
+      }
+      const f = this.flowDeployList.filter(flow => flow.laneId === row.laneId && flow.flowId === row.flowId)
+      if (f && f.length > 0 && f[0].version === row.version) {
+        return true
+      } else {
+        return false
+      }
+    },
+    checkDeploy(row) {
+      console.log(row)
+      if (!this.flowDeployList && this.flowDeployList.length < 1) {
+        return false
+      }
+      const f = this.flowDeployList.filter(flow => flow.laneId === row.laneId && flow.flowId === row.flowId)
+      if (f && f.length > 0 && f[0].version !== row.version) {
+        return true
+      } else {
+        return false
+      }
+    },
+    isDeploy(row) {
+      console.log(row)
+      if (!this.flowDeployList && this.flowDeployList.length < 1) {
+        return false
+      }
+      const f = this.flowDeployList.filter(flow => flow.laneId === row.laneId && flow.flowId === row.flowId)
+      if (f && f.length > 0) {
+        return true
+      } else {
+        return false
+      }
+    },
+
+    /**
+     * 版本不对的提示信息
+     */
+    versionTooltip(row) {
+      if (!this.flowDeployList || this.flowDeployList.length < 1) {
+        return ''
+      }
+      const f = this.flowDeployList.filter(flow => flow.laneId === row.laneId && flow.flowId === row.flowId)
+      if (f && f.length > 0 && f[0].version !== row.version) {
+        return '当前版本：' + row.version + '; 部署版本：' + f[0].version
+      }
+      return ''
     },
     // 取消按钮
     cancel() {
@@ -338,6 +434,9 @@ export default {
       }).then(() => {
         this.getList()
         this.$modal.msgSuccess('删除成功')
+      }).catch((e) => {
+        console.log('e', e)
+        this.loading = false
       })
     },
     /**
@@ -348,11 +447,17 @@ export default {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(function() {
-        return api.deploy(row.flowId, row.version)
       }).then(() => {
+        this.loading = true
+        return api.deploy(row.laneId, row.flowId, row.version)
+      }).then(async(rep) => {
+        this.loading = false
+        await this.getDeployAll()
         this.getList()
         this.$modal.msgSuccess('部署成功')
+      }).catch((e) => {
+        console.log('e', e)
+        this.loading = false
       })
     },
     /** 导出按钮操作 */

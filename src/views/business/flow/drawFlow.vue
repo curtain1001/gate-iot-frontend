@@ -30,7 +30,7 @@ export default {
     if (rep.code === 200) {
       this.flowRow = rep.data
       console.log('flowRow:' + this.flowRow)
-      this.nodeData = JSON.parse(this.flowRow.content)
+      this.nodeData = this.flowRow.content
     }
     this.$nextTick(() => {
       this.flowShow = true
@@ -43,8 +43,8 @@ export default {
         if (rep.code === 200) {
           this.flowRow = rep.data
           console.log('flowRow:' + this.flowRow)
-          this.nodeData = JSON.parse(this.flowRow.content)
-          this.$refs['logicFlow'].renderFlow()
+          this.nodeData = this.flowRow.content
+          this.$refs['logicFlow'].renderFlowData(this.nodeData)
         }
       })
     },

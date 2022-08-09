@@ -62,7 +62,7 @@ import registerPolyline from './js/registerPolyline'
 import PropertyDialog from './PropertySetting/PropertyDialog'
 import NodePanel from './NodePanel'
 import Control from './Control'
-import DataDialog from './DataDialog'
+import DataDialog from '../JsonDataDialog/index'
 import { nodeList } from './js/config'
 import router from '@/router'
 export default {
@@ -259,6 +259,16 @@ export default {
       }
       this.eventFlow()
     },
+    renderFlowData(data) {
+      console.log('nodeData:' + JSON.stringify(data))
+      if (data && data !== '') {
+        this.lf.render(data)
+      } else {
+        this.lf.render()
+      }
+      this.eventFlow()
+    },
+
     eventFlow() {
       // 参考 http://logic-flow.org/guide/advance/event.html#边事件
       // 节点点击 data, e, position
