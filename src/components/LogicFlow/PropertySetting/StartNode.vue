@@ -91,29 +91,25 @@ export default {
       return this.laneId()
     }
   },
-  activated() {
-    console.log('activated')
-    this.getDevices()
-  },
-  async mounted() {
+
+  async created() {
     console.log('mounted')
     await this.getDevices()
     await this.getServeIns()
     const { properties } = this.nodeData
-    this.$nextTick(function() {
+    this.$nextTick(() => {
       if (properties) {
         this.form = Object.assign({}, this.form, properties)
         if (this.form.instruction) {
           if (this.form.objectType === 'device') {
             const instructions = this.deviceList.filter(d => d.deviceId === this.form.deviceId)[0].instructions
-            this.deviceInsOptions = instructions.filter(i => i.insType === this.insType)
+            this.deviceInsOptions = instructions.filter(i => i.insType === this.form.insType)
           } else if (this.form.objectType === 'server') {
-            this.serverInsOptions = this.serverInsList.filter(x => x.insType === this.insType)
+            this.serverInsOptions = this.serverInsList.filter(x => x.insType === this.form.insType)
           }
         }
       }
     })
-
     console.log('form' + this.form)
   },
   methods: {
@@ -135,7 +131,7 @@ export default {
       this.form.deviceId = undefined
       this.form.instruction === undefined
       if (val === 'server') {
-        this.serverInsOptions = this.serverInsList.filter(x => x.insType === this.insType)
+        this.serverInsOptions = this.serverInsList.filter(x => x.insType === this.form.insType)
       }
     },
     deviceChange(val) {
@@ -146,7 +142,7 @@ export default {
       } else {
         this.form.instruction === undefined
         const instructions = this.deviceList.filter(d => d.deviceId === val)[0].instructions
-        this.deviceInsOptions = instructions.filter(i => i.insType === this.insType)
+        this.deviceInsOptions = instructions.filter(i => i.insType === this.form.insType)
       }
     },
     deviceInsChange(val) {

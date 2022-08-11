@@ -13,7 +13,6 @@ export default function registerPolyline(lf) {
       }
       customTextPosition = false;
     //   getTextPosition() {
-    //     debugger
     //     const position = super.getTextPosition()
     //     const currentPositionList = this.points.split(' ')
     //     const pointsList = []

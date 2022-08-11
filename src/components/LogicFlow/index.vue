@@ -17,7 +17,7 @@
     <!-- 属性面板 -->
     <el-drawer
       title="设置节点属性"
-      :visible.sync="dialogVisible"
+      :visible="dialogVisible"
       direction="rtl"
       size="400px"
       :before-close="closeDialog"

@@ -55,7 +55,6 @@ module.exports = {
     }
   },
   configureWebpack: {
-    // debugger
     devtool: 'source-map',
     name: name,
     resolve: {

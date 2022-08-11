@@ -20,7 +20,24 @@ export default {
       flowShow: false
     }
   },
-  async activated() {
+  // async activated() {
+  //   const params = this.$route.params
+  //   if (params && params.flowId) {
+  //     this.flowId = params.flowId
+  //   }
+  //   console.log(this.flowId)
+  //   const rep = await this.getFlowRow()
+  //   if (rep.code === 200) {
+  //     this.flowRow = rep.data
+  //     console.log('flowRow:' + this.flowRow)
+  //     this.nodeData = this.flowRow.content
+  //     this.$nextTick(() => {
+  //       this.$refs['logicFlow'].renderFlowData(this.nodeData)
+  //     })
+  //   }
+  //   await this.getLaneName()
+  // },
+  async created() {
     const params = this.$route.params
     if (params && params.flowId) {
       this.flowId = params.flowId
@@ -31,10 +48,11 @@ export default {
       this.flowRow = rep.data
       console.log('flowRow:' + this.flowRow)
       this.nodeData = this.flowRow.content
-    }
-    this.$nextTick(() => {
       this.flowShow = true
-    })
+      this.$nextTick(() => {
+        this.$refs['logicFlow'].renderFlowData(this.nodeData)
+      })
+    }
     await this.getLaneName()
   },
   methods: {

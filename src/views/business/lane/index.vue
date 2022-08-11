@@ -26,12 +26,12 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="场站号" prop="areaNo">
-        <el-select v-model="queryParams.areaNo" placeholder="请选择场站" clearable>
+      <el-form-item label="场站号" prop="areaId">
+        <el-select v-model="queryParams.areaId" placeholder="请选择场站" clearable>
           <el-option
             v-for="area in areaList"
-            :key="area.areaNo"
-            :label="dict.areaName"
+            :key="area.areaId"
+            :label="area.areaNo"
             :value="area.areaId"
           />
         </el-select>
@@ -130,7 +130,18 @@
         align="center"
         prop="areaId"
         :show-overflow-tooltip="true"
-      />
+      >
+        <template slot-scope="scope">
+          <el-select v-model="scope.row.areaId" clearable disabled>
+            <el-option
+              v-for="area in areaList"
+              :key="area.areaNo"
+              :label="area.areaNo"
+              :value="area.areaId"
+            />
+          </el-select>
+        </template>
+      </el-table-column>
       <el-table-column
         label="海关通道号"
         align="center"
@@ -232,13 +243,13 @@
         <el-form-item label="海关通道号" prop="customsLaneNo">
           <el-input v-model="form.customsLaneNo" placeholder="请输入通道名称" />
         </el-form-item>
-        <el-form-item label="场站号" prop="areaNo">
-          <el-select v-model="form.areaNo" placeholder="请选择场站" clearable style="">
+        <el-form-item label="场站号" prop="areaId">
+          <el-select v-model="form.areaId" placeholder="请选择场站" clearable style="">
             <el-option
               v-for="area in areaList"
-              :key="area.areaNo"
-              :label="dict.areaName"
-              :value="area.areaNo"
+              :key="area.areaId"
+              :label="area.areaNo"
+              :value="area.areaId"
             />
           </el-select>
         </el-form-item>
@@ -415,6 +426,7 @@ export default {
               this.$modal.msgSuccess('修改成功')
               this.open = false
               this.getList()
+              localStorage.removeItem('lane::laneId::' + this.form.laneId)
             })
           } else {
             addLane(this.form).then((response) => {
@@ -440,6 +452,7 @@ export default {
           if (rep.msg !== '' || rep.msg !== undefined) {
             this.$modal.msgWarning(rep.msg)
           } else {
+            localStorage.removeItem('lane::laneId::' + row.laneId)
             this.$modal.msgSuccess('删除成功')
           }
         })
