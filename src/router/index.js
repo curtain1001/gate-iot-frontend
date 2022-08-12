@@ -189,6 +189,20 @@ export const dynamicRoutes = [
         meta: { title: '绘制流程', activeMenu: '/business/flow' }
       }
     ]
+  },
+  {
+    path: '/business/flow-process-record',
+    component: Layout,
+    hidden: true,
+    permissions: ['business:flow-process:list'],
+    children: [
+      {
+        path: 'index/:instanceId(\\d+)',
+        component: () => import('@/views/business/flowrecord/record'),
+        name: 'FlowDraw',
+        meta: { title: '流程实例信息', activeMenu: '/business/flow-record' }
+      }
+    ]
   }
 ]
 

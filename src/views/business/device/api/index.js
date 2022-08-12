@@ -17,7 +17,7 @@ export default {
     })
   },
 
-  // 查询设备产品类型列表
+  // 开关
   enabled(id, status) {
     return request({
       url: `/business/device/${id}/${status === 0 ? 'on' : 'off'}`,

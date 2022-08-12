@@ -152,6 +152,26 @@
         </template>
       </el-table-column>
       <el-table-column
+        key="status"
+        label="状态"
+        align="center"
+        width="100"
+        prop="status"
+      >
+        <template slot-scope="scope">
+          <el-switch
+            v-model="scope.row.status"
+            :active-value="1"
+            active-text="关"
+            :inactive-value="0"
+            inactive-text="开"
+            active-color="#ff4949"
+            inactive-color="#13ce66"
+            @change="handleStatusChange(scope.row)"
+          />
+        </template>
+      </el-table-column>
+      <el-table-column
         label="操作"
         align="center"
         class-name="small-padding fixed-width"
@@ -314,7 +334,8 @@ export default {
         pageNum: 1,
         pageSize: 10,
         product: undefined,
-        commandValue: undefined
+        commandValue: undefined,
+        status: 0
       },
       // 表单参数
       form: {},
@@ -448,6 +469,25 @@ export default {
           this.$modal.msgSuccess('删除成功')
         })
         .catch(() => {})
+    },
+    handleStatusChange(row) {
+      console.log('instr' + row)
+      const text = row.status === 0 ? '启用' : '停用'
+      this.$modal.confirm('确认要"' + text + '""' + row.commandName + '"指令吗？').then(function() {
+        return api.enabled(row.instrId, row.status)
+      })
+        .then(() => {
+          this.$modal.msgSuccess(text + '成功')
+        }).catch(function(e) {
+          if (e === 'cancel') {
+            // TODO 确认不通过执行逻辑
+
+          } else if (e === 'close') {
+            // TODO 右上角X的执行逻辑
+
+          }
+          row.status = row.status === 0 ? 1 : 0
+        })
     }
   }
 }

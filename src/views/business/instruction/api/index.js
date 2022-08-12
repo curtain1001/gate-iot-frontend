@@ -1,6 +1,14 @@
 import request from '@/utils/request'
 export default {
 
+  // 开关
+  enabled(id, status) {
+    return request({
+      url: `/business/instruction/${id}/${status === 0 ? 'on' : 'off'}`,
+      method: 'put'
+    })
+  },
+
   // 执行指令
   run(id, product, instruction) {
     return request({
