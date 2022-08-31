@@ -391,8 +391,6 @@ export default {
       const flowId = row.flowId || this.ids
       api.getFlow(flowId).then(response => {
         this.form = response.data
-        this.form.laneId = String(this.form.laneId)
-        console.log(this.form)
         this.open = true
         this.title = '修改流程'
       })
@@ -406,7 +404,6 @@ export default {
       this.$refs['form'].validate(valid => {
         if (valid) {
           if (this.form.flowId != null) {
-            this.form.laneId = Number(this.form.laneId)
             api.updateFlow(this.form).then(response => {
               this.$modal.msgSuccess('修改成功')
               this.open = false

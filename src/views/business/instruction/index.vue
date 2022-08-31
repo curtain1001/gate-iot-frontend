@@ -273,6 +273,7 @@
                 <el-option label="字符串" value="STRING" />
                 <el-option label="字节数组" value="BINARY" />
                 <el-option label="哈希" value="HEX" />
+                <el-option label="脚本" value="SCRIPT" />
                 <el-option label="未知类型" value="UNKNOWN" />
               </el-select>
             </el-form-item>
@@ -433,14 +434,14 @@ export default {
       api.getInstruction(instrId).then((response) => {
         this.form = response.data
         this.open = true
-        this.title = '修改场站信息'
+        this.title = '修改指令信息'
       })
     },
     /** 提交按钮 */
     submitForm: function() {
       this.$refs['form'].validate((valid) => {
         if (valid) {
-          if (this.form.areaId !== undefined) {
+          if (this.form.instrId !== undefined) {
             api.updateInstruction(this.form).then((response) => {
               this.$modal.msgSuccess('修改成功')
               this.open = false

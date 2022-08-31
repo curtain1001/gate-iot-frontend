@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
-    <el-form v-show="showSearch" ref="queryForm" :model="queryParams" :inline="true" label-width="68px">
-      <el-form-item label="流程图部署信息主键" prop="deployId">
+    <el-form v-show="showSearch" ref="queryForm" :model="queryParams" :inline="true" label-width="88px">
+      <el-form-item label="流程图" prop="deployId">
         <el-input
           v-model="queryParams.deployId"
           placeholder="请输入流程图部署信息主键"

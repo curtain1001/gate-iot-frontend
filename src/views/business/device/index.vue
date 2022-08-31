@@ -253,8 +253,7 @@
           </el-select>
         </el-form-item>
         <el-divider v-if="form.product" content-position="left">配置属性</el-divider>
-        <PlcCreateInfo v-if="form.product==='PLC'" ref="config" v-model="form.configuration" @change="configChange" @input="configChange" />
-        <LicensePlateCreateInfo v-else-if="form.product==='OCR_License_Plate'" ref="config" v-model="form.configuration" @change="configChange" @input="configChange" />
+        <CustomizedSetting v-if="form.product" :value="form.configuration" :customize-datas="productList.find(x=> x.value===form.product).basicForm" @input="configurationInput" />
         <el-divider v-if="form.product" />
         <el-form-item label="备注" prop="remark">
           <el-input
@@ -278,16 +277,18 @@ import api from './api/index'
 import instrApi from '../instruction/api/index'
 import { laneAll } from '@/views/business/area/api/index.js'
 import { getLane } from '@/views/business/lane/api/index.js'
-import PlcCreateInfo from './component/PlcCreateInfo'
-import LicensePlateCreateInfo from './component/LicensePlateCreateInfo'
+// import PlcCreateInfo from './component/PlcCreateInfo'
+// import LicensePlateCreateInfo from './component/LicensePlateCreateInfo'
 import GetLaneName from '@/views/business/lane/component/GetLaneName'
+import CustomizedSetting from '@/components/CustomizedSetting'
 
 export default {
   name: 'Device',
   components: {
-    PlcCreateInfo,
-    LicensePlateCreateInfo,
-    GetLaneName
+    // PlcCreateInfo,
+    // LicensePlateCreateInfo,
+    GetLaneName,
+    CustomizedSetting
   },
   props: {
     laneId: {
@@ -334,7 +335,9 @@ export default {
       },
       instructionObj: {},
       // 表单参数
-      form: {},
+      form: {
+        configuration: undefined
+      },
       // 表单校验
       rules: {
         deviceName: [
@@ -349,6 +352,18 @@ export default {
       }
     }
   },
+  watch: {
+    'form.product'(val) {
+      if (this.form.product) {
+        const config = {}
+        const customizeDatas = this.productList.find(p => p.value === val).basicForm
+        customizeDatas.map(f => {
+          config[f.value] = f.default
+        })
+        this.form.configuration = { ...config, ...this.form.configuration }
+      }
+    }
+  },
   created() {
     const params = this.$route.query
     if (params && params.laneId) {
@@ -359,6 +374,11 @@ export default {
     this.getList()
   },
   methods: {
+    configurationInput(value) {
+      this.form.configuration = value
+      console.log('configurationInput：' + value)
+    },
+
     /** 查询参数列表 */
     getList() {
       this.loading = true
@@ -477,7 +497,7 @@ export default {
       const id = row.id || this.ids
       api.getDevice(id).then((response) => {
         this.form = response.data
-        this.form.laneId = String(this.form.laneId)
+        // this.form.laneId = String(this.form.laneId)
         this.open = true
         this.title = '修改设备信息'
       })

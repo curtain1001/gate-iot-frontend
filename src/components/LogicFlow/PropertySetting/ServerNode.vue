@@ -59,7 +59,8 @@ export default {
       form: {
         instruction: '',
         objectType: 'service',
-        deviceId: ''
+        deviceId: '',
+        insType: ''
       }
     }
   },
@@ -78,7 +79,7 @@ export default {
         this.form = Object.assign({}, this.form, properties)
         if (this.form.instruction) {
           if (this.form.objectType === 'server') {
-            this.serverInsOptions = this.serverInsList.filter(x => x.insType === 'up')
+            this.serverInsOptions = this.serverInsList.filter(x => x.insType === this.form.insType)
           }
         }
       }
@@ -106,7 +107,7 @@ export default {
         this.form.instruction = undefined
       } else {
         this.form.instruction === undefined
-        this.serverInsOptions = this.serverInsList.filter(i => i.insType === 'up')
+        this.serverInsOptions = this.serverInsList.filter(i => i.insType === this.form.insType)
       }
     },
     deviceInsChange(val) {

@@ -37,6 +37,7 @@ export default {
           return
         }
         state.message = callBack.data
+        console.log('websocket：' + state.message)
       }
       state.websock.οnerrοr = function() { // e错误
         // console.log(e)
