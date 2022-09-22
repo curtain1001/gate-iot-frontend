@@ -38,6 +38,8 @@ export default {
         } else {
           this.name = n
         }
+      } else {
+        this.name = ''
       }
     }
   }

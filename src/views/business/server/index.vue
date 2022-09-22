@@ -8,8 +8,20 @@
       :inline="true"
       label-width="100px"
     >
-      <el-form-item label="设备产品类型" prop="product">
-        <el-select v-model="queryParams.product" placeholder="请选择设备产品类型" clearable>
+      <el-form-item label="车道号" prop="laneId">
+        <el-cascader v-model="queryParams.laneId" :props="{emitPath:false,value:'value',label:'label',children:'children'}" :options="laneList" clearable />
+      </el-form-item>
+      <el-form-item label="服务名称" prop="serverName">
+        <el-input
+          v-model="queryParams.serverName"
+          placeholder="请输入服务名称"
+          clearable
+          style="width: 240px"
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="服务产品类型" prop="product">
+        <el-select v-model="queryParams.product" placeholder="请选择服务产品类型" clearable>
           <el-option
             v-for="product in productList"
             :key="product.value"
@@ -36,7 +48,7 @@
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button
-          v-hasPermi="['business:support-service:add']"
+          v-hasPermi="['business:server:add']"
           type="primary"
           plain
           icon="el-icon-plus"
@@ -46,7 +58,7 @@
       </el-col>
       <el-col :span="1.5">
         <el-button
-          v-hasPermi="['business:support-service:edit']"
+          v-hasPermi="['business:server:edit']"
           type="success"
           plain
           icon="el-icon-edit"
@@ -57,7 +69,7 @@
       </el-col>
       <el-col :span="1.5">
         <el-button
-          v-hasPermi="['business:support-service:remove']"
+          v-hasPermi="['business:server:remove']"
           type="danger"
           plain
           icon="el-icon-delete"
@@ -70,38 +82,45 @@
     </el-row>
     <el-table
       v-loading="loading"
-      :data="supportList"
+      :data="serverList"
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="主键" align="center" prop="id" />
+      <el-table-column label="id" align="center" prop="id" />
+      <el-table-column
+        label="服务号"
+        align="center"
+        prop="serverId"
+        :show-overflow-tooltip="true"
+      />
       <el-table-column
         label="服务名称"
         align="center"
-        prop="product"
+        prop="serverName"
         :show-overflow-tooltip="true"
-      ><template slot-scope="scope">
-        {{ productList.find(p=>p.value===scope.row.product).name }}
-      </template>
-      </el-table-column>
+      />
       <el-table-column
-        label="组件类型"
+        label="通道号"
         align="center"
-        prop="networkType"
+        prop="areaNo"
         :show-overflow-tooltip="true"
       >
         <template slot-scope="scope">
-          {{ networkTypeList.find(p=>p.id===scope.row.networkType).name }}
+          <GetLaneName v-model="scope.row.laneId" />
         </template>
       </el-table-column>
       <el-table-column
-        label="组件名称"
+        label="服务产品类型"
         align="center"
-        prop="networkName"
+        prop="customsLaneNo"
         :show-overflow-tooltip="true"
-      />
-      <!-- <el-table-column
-        label="设备配置"
+      >
+        <template slot-scope="scope">
+          <span>{{ scope.row.product }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        label="服务配置"
         align="center"
         prop="type"
         :show-overflow-tooltip="true"
@@ -109,7 +128,32 @@
         <template slot-scope="scope">
           <span>{{ scope.row.configuration }}</span>
         </template>
-      </el-table-column> -->
+      </el-table-column>
+      <el-table-column label="状态" align="center" width="100">
+        <template slot-scope="scope">
+          <span>{{ scope.row.status }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        key="enabled"
+        label="开关"
+        align="center"
+        width="100"
+        prop="enabled"
+      >
+        <template slot-scope="scope">
+          <el-switch
+            v-model="scope.row.enabled"
+            :active-value="1"
+            active-text="关"
+            :inactive-value="0"
+            inactive-text="开"
+            active-color="#ff4949"
+            inactive-color="#13ce66"
+            @change="handleStatusChange(scope.row)"
+          />
+        </template>
+      </el-table-column>
       <el-table-column
         label="备注"
         align="center"
@@ -134,23 +178,33 @@
       >
         <template slot-scope="scope">
           <el-button
-            v-hasPermi="['business:device:edit']"
+            v-hasPermi="['business:server:edit']"
             size="mini"
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
           >修改</el-button>
           <el-button
-            v-hasPermi="['business:device:remove']"
+            v-hasPermi="['business:server:remove']"
             size="mini"
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
           >删除</el-button>
+          <el-dropdown
+            v-hasPermi="['business:server:instruction']"
+            @command="handleCommand"
+          >
+            <span class="el-dropdown-link">
+              指令列表<i class="el-icon-arrow-down el-icon--right" />
+            </span>
+            <el-dropdown-menu>
+              <el-dropdown-item v-for="item in scope.row.instructions" :key="item.value" divided :disabled="item.insType !== 'down'" :command="{row:scope.row,command:item.value}"> {{ item.name }}</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
         </template>
       </el-table-column>
     </el-table>
-
     <pagination
       v-show="total > 0"
       :total="total"
@@ -168,6 +222,23 @@
       :close-on-click-modal="false"
     >
       <el-form ref="form" :model="form" :rules="rules" label-width="120px">
+        <el-form-item label="车道号" prop="laneId">
+          <el-cascader
+            ref="cascader"
+            v-model="form.laneId"
+            :show-all-levels="false"
+            :props="{emitPath:false,value:'value',label:'label',children:'children'}"
+            :options="laneList"
+            clearable
+            @change="handlerChange"
+          />
+        </el-form-item>
+        <el-form-item label="服务号" prop="serverId">
+          <el-input v-model="form.serverId" placeholder="请输入服务号" />
+        </el-form-item>
+        <el-form-item label="服务名称" prop="serverName">
+          <el-input v-model="form.serverName" placeholder="请输入服务名称" />
+        </el-form-item>
         <el-form-item label="服务产品类型" prop="product">
           <el-select v-model="form.product" placeholder="请服务产品类型" clearable @change="productChange">
             <el-option
@@ -175,26 +246,6 @@
               :key="product.value"
               :label="product.name"
               :value="product.value"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="网络组件类型" prop="type">
-          <el-select v-model="form.networkType" placeholder="请选择网络组件类型" clearable @change="networkTypeChange">
-            <el-option
-              v-for="network in networkTypeList"
-              :key="network.id"
-              :label="network.name"
-              :value="network.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="组件选择" prop="networkId">
-          <el-select v-model="form.networkId" placeholder="请选择组件" clearable @change="networkChange">
-            <el-option
-              v-for="network in networkList"
-              :key="network.networkConfigId"
-              :label="network.name"
-              :value="network.networkConfigId"
             />
           </el-select>
         </el-form-item>
@@ -220,12 +271,16 @@
 
 <script>
 import api from './api/index'
-import networkApi from '../network/api/index'
+import instrApi from '../instruction/api/index'
+import { laneAll } from '@/views/business/area/api/index.js'
+import { getLane } from '@/views/business/lane/api/index.js'
+import GetLaneName from '@/views/business/lane/component/GetLaneName'
 import CustomizedSetting from '@/components/CustomizedSetting'
 
 export default {
-  name: 'SupportServer',
+  name: 'Server',
   components: {
+    GetLaneName,
     CustomizedSetting
   },
   props: {
@@ -248,14 +303,13 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
-      // 设备产品列表
+      // 所有场站信息
+      // 通道表格数据
+      laneList: [],
+      // 服务产品列表
       productList: [],
-      // 设备列表
-      supportList: [],
-      // 网络组件类型
-      networkTypeList: [],
-      // 网络组件
-      networkList: [],
+      // 服务列表
+      serverList: [],
       // 弹出层标题
       title: '',
       // 是否显示弹出层
@@ -267,22 +321,21 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
+        serverName: undefined,
+        laneId: undefined,
         product: undefined,
-        networkType: undefined,
         configuration: undefined
       },
       instructionObj: {},
       // 表单参数
       form: {
-        configuration: undefined
+        configuration: undefined,
+        laneId: null
       },
       // 表单校验
       rules: {
-        deviceName: [
-          { required: true, message: '设备名称不能为空', trigger: 'blur' }
-        ],
-        laneId: [
-          { required: true, message: '通道号不能为空', trigger: 'blur' }
+        serverId: [
+          { required: true, message: '服务号不能为空', trigger: 'blur' }
         ],
         product: [
           { required: true, message: '产品类型不能为空', trigger: 'blur' }
@@ -290,60 +343,48 @@ export default {
       }
     }
   },
-  // watch: {
-  //   'form.product'(val) {
-  //     if (this.form.product) {
-  //       const config = {}
-  //       const customizeDatas = this.productList.find(p => p.value === val).basicForm
-  //       customizeDatas.map(f => {
-  //         config[f.value] = f.default
-  //       })
-  //       this.form.configuration = { ...config, ...this.form.configuration }
-  //     }
-  //   }
-  // },
+  watch: {
+    'form.product'(val) {
+      if (this.form.product) {
+        const config = {}
+        const customizeDatas = this.productList.find(p => p.value === val).basicForm
+        customizeDatas.map(f => {
+          config[f.value] = f.default
+        })
+        this.form.configuration = { ...config, ...this.form.configuration }
+      }
+    }
+  },
   created() {
+    const params = this.$route.query
+    if (params && params.laneId) {
+      this.queryParams.laneId = params.laneId
+    }
+    this.getLaneList()
     this.getProductList()
-    this.getNetworkSupports()
     this.getList()
   },
   methods: {
-    networkTypeChange(val) {
-      if (val && val !== null) {
-        this.getNetworkList(val)
-      }
-      console.log(val)
-    },
-    networkChange(val) {
-      if (val && val != null) {
-        console.log(val)
-      }
-    },
-    getNetworkList(type) {
-      networkApi.getListByType(type).then(rep => {
-        if (rep && rep.code === 200) {
-          this.networkList = rep.data
-        }
-      })
-    },
-    getNetworkSupports() {
-      networkApi.getSupports().then(rep => {
-        if (rep && rep.code === 200) {
-          this.networkTypeList = rep.data
-        }
-      })
+    configurationInput(value) {
+      this.form.configuration = value
+      console.log('configurationInput：' + value)
     },
 
     /** 查询参数列表 */
     getList() {
       this.loading = true
-      api.lisSupport(this.queryParams).then(
+      api.listServer(this.queryParams).then(
         (response) => {
-          this.supportList = response.rows
+          this.serverList = response.rows
           this.total = response.total
           this.loading = false
         }
       )
+    },
+    getLaneList() {
+      laneAll().then((rep) => {
+        this.laneList = rep.data
+      })
     },
 
     getProductList() {
@@ -352,6 +393,20 @@ export default {
       })
     },
 
+    getLaneName(laneId) {
+      if (laneId) {
+        getLane(laneId).then(rep => {
+          return rep.data.laneName
+        })
+      }
+    },
+
+    handleCommand(val) {
+      instrApi.run(val.row.id, val.row.product, val.command).then((rep) => {
+        console.log(rep)
+        this.$modal.msgSuccess('执行完成')
+      })
+    },
     // getProductName(product) {
     //   const products = this.productList
     //   return products.filter(x => x.value === product)[0].name
@@ -363,7 +418,7 @@ export default {
     },
     handleStatusChange(row) {
       const text = row.enabled === 0 ? '启用' : '停用'
-      this.$modal.confirm('确认要"' + text + '""' + row.deviceName + '"设备吗？').then(function() {
+      this.$modal.confirm('确认要"' + text + '""' + row.serverName + '"服务吗？').then(function() {
         return api.enabled(row.id, row.enabled)
       })
         .then(() => {
@@ -395,9 +450,10 @@ export default {
     reset() {
       this.form = {
         id: undefined,
+        serverId: undefined,
+        serverName: undefined,
+        laneId: undefined,
         product: undefined,
-        networkType: undefined,
-        networkId: undefined,
         configuration: undefined,
         remark: undefined
       }
@@ -418,7 +474,7 @@ export default {
     handleAdd() {
       this.reset()
       this.open = true
-      this.title = '添加设备'
+      this.title = '添加服务'
     },
     // 多选框选中数据
     handleSelectionChange(selection) {
@@ -430,11 +486,11 @@ export default {
     handleUpdate(row) {
       this.reset()
       const id = row.id || this.ids
-      api.getSupport(id).then((response) => {
+      api.getServer(id).then((response) => {
         this.form = response.data
-        this.getNetworkList(this.form.networkType)
+        // this.form.laneId = String(this.form.laneId)
         this.open = true
-        this.title = '修改设备信息'
+        this.title = '修改服务信息'
       })
     },
     /** 提交按钮 */
@@ -442,14 +498,16 @@ export default {
       this.$refs['form'].validate((valid) => {
         if (valid) {
           if (this.form.id !== undefined) {
-            this.form.laneId = Number(this.form.laneId)
-            api.updateSupport(this.form).then((response) => {
+            if (this.form.laneId) {
+              this.form.laneId = Number(this.form.laneId)
+            }
+            api.updateServer(this.form).then((response) => {
               this.$modal.msgSuccess('修改成功')
               this.open = false
               this.getList()
             })
           } else {
-            api.addSupport(this.form).then((response) => {
+            api.addServer(this.form).then((response) => {
               this.$modal.msgSuccess('新增成功')
               this.open = false
               this.getList()
@@ -462,9 +520,9 @@ export default {
     handleDelete(row) {
       const ids = row.id || this.ids
       this.$modal
-        .confirm('是否确认删除设备编号为"' + ids + '"的数据项？')
+        .confirm('是否确认删除服务编号为"' + ids + '"的数据项？')
         .then(function() {
-          return api.delSupport(ids)
+          return api.delServer(ids)
         })
         .then((rep) => {
           this.getList()

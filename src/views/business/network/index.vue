@@ -115,6 +115,7 @@
         <template slot-scope="scope">
           <el-switch
             v-model="scope.row.status"
+            :disabled="scope.row.control==='own'"
             active-value="disabled"
             active-text="关"
             inactive-value="enabled"
@@ -130,6 +131,7 @@
         <template slot-scope="scope">
           <el-button
             v-hasPermi="['business:network:edit']"
+            :disabled="scope.row.control==='own'"
             size="mini"
             type="text"
             icon="el-icon-edit"
@@ -137,6 +139,7 @@
           >修改</el-button>
           <el-button
             v-hasPermi="['business:network:remove']"
+            :disabled="scope.row.control==='own'"
             size="mini"
             type="text"
             icon="el-icon-delete"
@@ -179,11 +182,9 @@
             <el-option label="不自动开启" value="false" />
           </el-select>
         </el-form-item>
-        <!-- <el-form-item label="配置" prop="configuration">
-          <el-input v-model="form.configuration" type="textarea" placeholder="请输入内容" />
-
-        </el-form-item> -->
+        <el-divider v-if="form.type" content-position="left">配置属性</el-divider>
         <CustomizedSetting v-if="form.type" :value="form.configuration" :customize-datas="supportsList.find(x=> x.id===form.type).basicForm" @input="configurationInput" />
+        <el-divider v-if="form.type" />
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
         </el-form-item>
