@@ -1,11 +1,18 @@
 import request from '@/utils/request'
 export default {
 // 查询流程运行实例列表
-  listInstance(query) {
+  listWorkIndex(query) {
     return request({
-      url: '/business/flow-process/list',
+      url: '/business/work-index/list',
       method: 'get',
       params: query
+    })
+  },
+
+  getColumns() {
+    return request({
+      url: '/business/work-index/columns',
+      method: 'get'
     })
   },
 

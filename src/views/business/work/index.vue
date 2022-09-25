@@ -75,26 +75,27 @@
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
-    <right-toolbar :show-search.sync="showSearch" :columns="tableHead" @queryTable="getList" />
+    <right-toolbar :show-search.sync="showSearch" :columns="columns" :path="$options.name" @queryTable="getList" />
     <!-- 正文表格 -->
     <el-table
       style="width: 100%"
       border
-      :data="tableData"
+      :data="workList"
       max-height="340"
       :row-style="{height: '0'}"
       :cell-style="{padding: '0'}"
     >
       <el-table-column type="index" />
       <template v-for="(item,index) in tableHead">
-        <el-table-column v-if="item.columnValue != 'id'" :key="index" align="center" :prop="item.columnValue" :label="item.columnName" />
-        <el-table-column v-if="item.columnValue === 'laneNo'" :key="index" align="center" :prop="item.columnValue" :label="item.columnName">
+        <el-table-column v-if="columns.find(x=>x.value===item.columnValue).visible && item.columnValue === 'laneNo'" :key="index" align="center" :prop="item.columnValue" :label="item.columnName">
           <template slot-scope="scope">
             <GetLaneName v-model="scope.row.laneNo" />
           </template>
         </el-table-column>
+        <!-- 匹配放置条件判断之后 -->
+        <el-table-column v-else-if="columns.find(x=>x.value===item.columnValue).visible && item.columnValue != 'id'" :key="index" align="center" :prop="item.columnValue" :label="item.columnName" />
       </template>
-      <el-table-column label="操作" fixed="right" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" fixed="right" width="188px" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
             v-hasPermi="['system:instance:edit']"
@@ -180,7 +181,7 @@ const instanceStatus = [
   { key: 'TERMINATED', value: '已终止' }
 ]
 export default {
-  name: 'Instance',
+  name: 'WorkIndex',
   components: {
     GetLaneName,
     Carousel
@@ -209,8 +210,12 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
-      // 流程运行实例表格数据
-      instanceList: [],
+      // 表格数据
+      workList: [],
+      // 表头数据
+      tableHead: [],
+      // 列表显隐处理 key,lable,visible
+      columns: [],
       // 弹出层标题
       title: '',
       // 是否显示弹出层
@@ -234,81 +239,48 @@ export default {
       form: {},
       // 表单校验
       rules: {
-      },
-      tableHead: [
-        {
-          columnValue: 'column_name', columnName: '姓名'
-        },
-        {
-          columnValue: 'column_age', columnName: '年龄'
-        },
-        {
-          columnValue: 'column_sex', columnName: '性别'
-        }
-      ],
-      // 表格数据
-      tableData: [{
-        column_age: '3',
-        column_name: '鞠婧祎',
-        column_sex: '女'
-      },
-      {
-        column_age: '25',
-        column_name: '魏大勋',
-        column_sex: '男'
-      },
-      {
-        column_age: '25',
-        column_name: '魏大勋',
-        column_sex: '男'
-      },
-      {
-        column_age: '25',
-        column_name: '魏大勋',
-        column_sex: '男'
-      },
-      {
-        column_age: '25',
-        column_name: '魏大勋',
-        column_sex: '男'
-      },
-      {
-        column_age: '25',
-        column_name: '魏大勋',
-        column_sex: '男'
-      },
-      {
-        column_age: '25',
-        column_name: '魏大勋',
-        column_sex: '男'
-      },
-      {
-        column_age: '25',
-        column_name: '魏大勋',
-        column_sex: '男'
-      },
-      {
-        column_age: '25',
-        column_name: '魏大勋',
-        column_sex: '男'
-      },
-      {
-        column_age: '18',
-        column_name: '关晓彤',
-        column_sex: '女'
-      }]
+      }
     }
   },
   created() {
-    // this.getList()
+    this.getColumns()
+    this.getList()
   },
   methods: {
     /** 查询流程运行实例列表 */
     getList() {
       this.loading = true
-      api.listInstance(this.queryParams).then(response => {
-        this.instanceList = response.rows
+      api.listWorkIndex(this.queryParams).then(response => {
+        this.workList = response.rows
         this.total = response.total
+        this.loading = false
+      })
+    },
+    getColumns() {
+      this.loading = true
+      api.getColumns().then(rep => {
+        var data = []
+        const val = rep.data
+        if (val && Array.isArray(val)) {
+          for (let i = 0; i < val.length; i++) {
+            data.push({
+              key: i,
+              label: val[i].columnName,
+              value: val[i].columnValue,
+              visible: true
+            })
+          }
+        }
+        this.userName = this.$store.state.user.name
+        const key = `${this.userName}::${this.$options.name}::RightToolbar`
+        var cacheColumns = this.$cache.local.get(key)
+        if (cacheColumns) {
+          cacheColumns = JSON.parse(cacheColumns)
+          this.columns = Object.values({ ...data, ...cacheColumns })
+        } else {
+          this.columns = data
+        }
+        this.tableHead = rep.data
         this.loading = false
       })
     },

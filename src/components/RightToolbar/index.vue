@@ -32,8 +32,13 @@ export default {
     columns: {
       type: Array,
       default: () => []
+    },
+    path: {
+      type: String,
+      default: () => ''
     }
   },
+
   data() {
     return {
       // 显隐数据
@@ -41,11 +46,22 @@ export default {
       // 弹出层标题
       title: '显示/隐藏',
       // 是否显示弹出层
-      open: false
+      open: false,
+      userName: ''
+    }
+  },
+  watch: {
+    'columns'(val) {
+      for (const item in this.columns) {
+        if (this.columns[item].visible === false) {
+          this.value.push(parseInt(item))
+        }
+      }
     }
   },
   created() {
     // 显隐列初始默认隐藏列
+    console.log(this.columns)
     for (const item in this.columns) {
       if (this.columns[item].visible === false) {
         this.value.push(parseInt(item))
@@ -68,6 +84,9 @@ export default {
         // eslint-disable-next-line vue/no-mutating-props
         this.columns[item].visible = !data.includes(key)
       }
+      this.userName = this.$store.state.user.name
+      const key = `${this.userName}::${this.path}::RightToolbar`
+      this.$cache.local.set(key, JSON.stringify(this.columns))
     },
     // 打开显隐列dialog
     showColumn() {
