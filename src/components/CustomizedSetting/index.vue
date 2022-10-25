@@ -1,6 +1,5 @@
 <template>
   <el-form v-if="customizeDatas && Array.isArray(customizeDatas)" ref="form" v-model="configuration" label-width="80px">
-    {{ configuration }}
     <div v-for="(item, index) in customizeDatas" :key="index">
       <el-form-item :label="item.label" :prop="item.value">
         <el-input v-if="item.type ==='string'" v-model="configuration[item.value]" type="text" placeholder="配置值" @change="submit" @input="submit" @blur="submit" />

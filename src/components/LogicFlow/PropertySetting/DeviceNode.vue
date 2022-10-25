@@ -98,13 +98,10 @@ export default {
         }
       }
     })
-
-    console.log('form' + this.form)
   },
   methods: {
     async getDevices() {
       const rep = await deviceApi.getDevices(this.laneId)
-      console.log('设备列表：' + rep)
       if (rep.code === 200) {
         this.deviceList = rep.data
       }
@@ -116,7 +113,6 @@ export default {
       }
     },
     deviceChange(val) {
-      console.log('设备：' + val)
       if (!val) {
         this.form.deviceId = undefined
         this.form.instruction = undefined
@@ -130,10 +126,8 @@ export default {
       this.deviceInsOptions = this.deviceInstructons.filter(i => i.insType === val)
     },
     deviceInsChange(val) {
-      console.log('指令：' + val)
     },
     serverInsChange(val) {
-      console.log('服务指令+' + val)
     },
 
     onSubmit() {

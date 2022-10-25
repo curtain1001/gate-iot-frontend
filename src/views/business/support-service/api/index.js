@@ -1,7 +1,7 @@
 import request from '@/utils/request'
 export default {
   // 获取所有组件支持
-  listServerProduct() {
+  listServiceProduct() {
     return request({
       url: `/business/support-service/product/list`,
       method: 'get'

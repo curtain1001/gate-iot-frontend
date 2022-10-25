@@ -18,7 +18,7 @@ export default {
     }
   },
   created() {
-    this.initWebSocket()
+    // this.initWebSocket()
   },
   methods: {
     initWebSocket() {

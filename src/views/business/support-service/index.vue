@@ -8,13 +8,16 @@
       :inline="true"
       label-width="100px"
     >
-      <el-form-item label="设备产品类型" prop="product">
-        <el-select v-model="queryParams.product" placeholder="请选择设备产品类型" clearable>
+      <el-form-item label="车道号" prop="laneId">
+        <el-cascader v-model="queryParams.laneId" :props="{emitPath:false,value:'value',label:'label',children:'children'}" :options="laneList" clearable />
+      </el-form-item>
+      <el-form-item label="服务名称" prop="service">
+        <el-select v-model="queryParams.service" placeholder="请选择服务" clearable>
           <el-option
-            v-for="product in productList"
-            :key="product.value"
-            :label="product.name"
-            :value="product.value"
+            v-for="service in serviceList"
+            :key="service.value"
+            :label="service.name"
+            :value="service.value"
           />
         </el-select>
       </el-form-item>
@@ -70,36 +73,50 @@
     </el-row>
     <el-table
       v-loading="loading"
-      :data="supportList"
+      :data="list"
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="主键" align="center" prop="id" />
       <el-table-column
-        label="服务名称"
+        label="车道名称"
         align="center"
-        prop="product"
-        :show-overflow-tooltip="true"
-      ><template slot-scope="scope">
-        {{ productList.find(p=>p.value===scope.row.product).name }}
-      </template>
-      </el-table-column>
-      <el-table-column
-        label="组件类型"
-        align="center"
-        prop="networkType"
+        prop="laneId"
         :show-overflow-tooltip="true"
       >
         <template slot-scope="scope">
-          {{ networkTypeList.find(p=>p.id===scope.row.networkType).name }}
+          <GetLaneName v-model="scope.row.laneId" />
         </template>
       </el-table-column>
       <el-table-column
+        label="服务名称"
+        align="center"
+        prop="serviceName"
+        :show-overflow-tooltip="true"
+      />
+      <el-table-column
+        label="设备"
+        align="center"
+        prop="devices"
+        :show-overflow-tooltip="true"
+      >
+        <template slot-scope="scope">
+          <el-tag
+            v-for="item in scope.row.devices"
+            :key="item.key"
+            type=""
+            effect="dark"
+          >
+            {{ item.value }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <!-- <el-table-column
         label="组件名称"
         align="center"
         prop="networkName"
         :show-overflow-tooltip="true"
-      />
+      /> -->
       <!-- <el-table-column
         label="设备配置"
         align="center"
@@ -150,7 +167,6 @@
         </template>
       </el-table-column>
     </el-table>
-
     <pagination
       v-show="total > 0"
       :total="total"
@@ -167,46 +183,38 @@
       append-to-body
       :close-on-click-modal="false"
     >
+
       <el-form ref="form" :model="form" :rules="rules" label-width="120px">
-        <el-form-item label="服务产品类型" prop="product">
-          <el-select v-model="form.product" placeholder="请服务产品类型" clearable @change="productChange">
-            <el-option
-              v-for="product in productList"
-              :key="product.value"
-              :label="product.name"
-              :value="product.value"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="网络组件类型" prop="type">
-          <el-select v-model="form.networkType" placeholder="请选择网络组件类型" clearable @change="networkTypeChange">
-            <el-option
-              v-for="network in networkTypeList"
-              :key="network.id"
-              :label="network.name"
-              :value="network.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="组件选择" prop="networkId">
-          <el-select v-model="form.networkId" placeholder="请选择组件" clearable @change="networkChange">
-            <el-option
-              v-for="network in networkList"
-              :key="network.networkConfigId"
-              :label="network.name"
-              :value="network.networkConfigId"
-            />
-          </el-select>
-        </el-form-item>
-        <el-divider v-if="form.product" content-position="left">配置属性</el-divider>
-        <CustomizedSetting v-if="form.product" :value="form.configuration" :customize-datas="productList.find(x=> x.value===form.product).basicForm" @input="configurationInput" />
-        <el-divider v-if="form.product" />
-        <el-form-item label="备注" prop="remark">
-          <el-input
-            v-model="form.remark"
-            type="textarea"
-            placeholder="请输入内容"
+        <el-form-item label="车道号" prop="laneId">
+          <el-cascader
+            ref="cascader"
+            v-model="form.laneId"
+            :show-all-levels="false"
+            :props="{emitPath:false,value:'value',label:'label',children:'children'}"
+            :options="laneList"
+            clearable
+            @change="handlerChange"
           />
+        </el-form-item>
+        <el-form-item label="服务类型" prop="serviceName">
+          <el-select v-model="form.serviceName" placeholder="请服务类型" clearable @change="serviceChange">
+            <el-option
+              v-for="service in serviceList"
+              :key="service.value"
+              :label="service.name"
+              :value="service"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="设备" prop="devices">
+          <el-select v-model="form.deviceIds" placeholder="请选择设备" multiple clearable @change="deviceChange">
+            <el-option
+              v-for="device in deviceList"
+              :key="device.id"
+              :label="device.deviceName"
+              :value="device.id"
+            />
+          </el-select>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -220,13 +228,14 @@
 
 <script>
 import api from './api/index'
-import networkApi from '../network/api/index'
-import CustomizedSetting from '@/components/CustomizedSetting'
-
+import deviceApi from '../device/api/index'
+import { laneAll } from '@/views/business/area/api/index.js'
+// import { getLane } from '@/views/business/lane/api/index.js'
+import GetLaneName from '@/views/business/lane/component/GetLaneName'
 export default {
-  name: 'SupportServer',
+  name: 'SupportService',
   components: {
-    CustomizedSetting
+    GetLaneName
   },
   props: {
     laneId: {
@@ -248,14 +257,11 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
-      // 设备产品列表
-      productList: [],
+      laneList: [],
+      list: [],
       // 设备列表
-      supportList: [],
-      // 网络组件类型
-      networkTypeList: [],
-      // 网络组件
-      networkList: [],
+      deviceList: [],
+      serviceList: [],
       // 弹出层标题
       title: '',
       // 是否显示弹出层
@@ -284,82 +290,65 @@ export default {
         laneId: [
           { required: true, message: '通道号不能为空', trigger: 'blur' }
         ],
-        product: [
-          { required: true, message: '产品类型不能为空', trigger: 'blur' }
+        serviceCode: [
+          { required: true, message: '服务类型不能为空', trigger: 'blur' }
         ]
       }
     }
   },
-  // watch: {
-  //   'form.product'(val) {
-  //     if (this.form.product) {
-  //       const config = {}
-  //       const customizeDatas = this.productList.find(p => p.value === val).basicForm
-  //       customizeDatas.map(f => {
-  //         config[f.value] = f.default
-  //       })
-  //       this.form.configuration = { ...config, ...this.form.configuration }
-  //     }
-  //   }
-  // },
   created() {
-    this.getProductList()
-    this.getNetworkSupports()
+    this.getServiceSupports()
+    this.getLaneList()
     this.getList()
   },
   methods: {
-    networkTypeChange(val) {
-      if (val && val !== null) {
-        this.getNetworkList(val)
-      }
-      console.log(val)
+    getLaneList() {
+      laneAll().then((rep) => {
+        this.laneList = rep.data
+      })
     },
-    networkChange(val) {
+    serviceChange(val) {
       if (val && val != null) {
         console.log(val)
+        this.form.serviceCode = val.value
+        this.form.serviceName = val.name
       }
     },
-    getNetworkList(type) {
-      networkApi.getListByType(type).then(rep => {
+    getDevices() {
+      if (!this.form.laneId) {
+        this.$modal.msgWarning('请先选择车道')
+        return
+      }
+      deviceApi.getDevices(this.form.laneId).then(rep => {
         if (rep && rep.code === 200) {
-          this.networkList = rep.data
+          this.deviceList = rep.data
         }
       })
     },
-    getNetworkSupports() {
-      networkApi.getSupports().then(rep => {
+    getServiceSupports() {
+      api.listServiceProduct().then(rep => {
         if (rep && rep.code === 200) {
-          this.networkTypeList = rep.data
+          this.serviceList = rep.data
         }
       })
     },
-
     /** 查询参数列表 */
     getList() {
       this.loading = true
       api.lisSupport(this.queryParams).then(
         (response) => {
-          this.supportList = response.rows
+          this.list = response.rows
           this.total = response.total
-          this.loading = false
         }
       )
+      this.loading = false
     },
-
-    getProductList() {
-      api.listServerProduct().then((rep) => {
-        this.productList = rep.data
-      })
-    },
-
-    // getProductName(product) {
-    //   const products = this.productList
-    //   return products.filter(x => x.value === product)[0].name
-    // },
-    productChange(val) {
-      if (!val) {
-        this.form.configuration = undefined
+    deviceChange(val) {
+      if (!this.form.laneId) {
+        this.$modal.msgWarning('请先选择车道')
+        return
       }
+      console.log('设备选择', val)
     },
     handleStatusChange(row) {
       const text = row.enabled === 0 ? '启用' : '停用'
@@ -380,8 +369,13 @@ export default {
         })
     },
 
-    handlerChange() {
-
+    handlerChange(val) {
+      console.log('车道选择：', val)
+      if (val) {
+        this.getDevices()
+      } else {
+        this.deviceList = []
+      }
     },
     configChange(val) {
       this.form.configuration = val

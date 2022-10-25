@@ -407,7 +407,7 @@ export default {
       })
     },
     handleConfig(row) {
-      router.push(`/business/lane-config/index/${row.laneId}`)
+      router.replace({ path: '/business/lane-config', query: { laneId: row.laneId }})
     },
     handleDevice(row) {
       // router.replace 强制刷新跳转的页面

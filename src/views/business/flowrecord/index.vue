@@ -46,7 +46,7 @@
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button
-          v-hasPermi="['system:instance:add']"
+          v-hasPermi="['business:flow-process:add']"
           type="primary"
           plain
           icon="el-icon-plus"
@@ -56,7 +56,7 @@
       </el-col>
       <el-col :span="1.5">
         <el-button
-          v-hasPermi="['system:instance:edit']"
+          v-hasPermi="['business:flow-process:edit']"
           type="success"
           plain
           icon="el-icon-edit"
@@ -67,18 +67,18 @@
       </el-col>
       <el-col :span="1.5">
         <el-button
-          v-hasPermi="['system:instance:remove']"
+          v-hasPermi="['business:flow-process:remove']"
           type="danger"
           plain
           icon="el-icon-delete"
           size="mini"
           :disabled="multiple"
           @click="handleDelete"
-        >删除</el-button>
+        >终止</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
-          v-hasPermi="['system:instance:export']"
+          v-hasPermi="['business:instance:export']"
           type="warning"
           plain
           icon="el-icon-download"
@@ -127,7 +127,7 @@
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
-          >删除</el-button>
+          >终止</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -316,7 +316,7 @@ export default {
     /** 删除按钮操作 */
     handleDelete(row) {
       const instanceIds = row.instanceId || this.ids
-      this.$confirm('是否确认删除流程运行实例编号为"' + instanceIds + '"的数据项?', '警告', {
+      this.$confirm('是否确认终止流程运行实例编号为"' + instanceIds + '"的数据项?', '警告', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
@@ -324,7 +324,7 @@ export default {
         return api.delInstance(instanceIds)
       }).then(() => {
         this.getList()
-        this.$modal.msgSuccess('删除成功')
+        this.$modal.msgSuccess('终止成功')
       })
     },
     /** 导出按钮操作 */

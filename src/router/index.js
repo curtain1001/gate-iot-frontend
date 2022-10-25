@@ -162,20 +162,20 @@ export const dynamicRoutes = [
       }
     ]
   },
-  {
-    path: '/business/lane-config',
-    component: Layout,
-    hidden: true,
-    permissions: ['business:laneconfig:list'],
-    children: [
-      {
-        path: 'index/:laneId(\\d+)',
-        component: () => import('@/views/business/lane/config'),
-        name: 'LaneConfig',
-        meta: { title: '通道配置', activeMenu: '/business/lane' }
-      }
-    ]
-  },
+  // {
+  //   path: '/business/lane-config',
+  //   component: Layout,
+  //   hidden: true,
+  //   permissions: ['business:laneconfig:list'],
+  //   children: [
+  //     {
+  //       path: 'index/:laneId(\\d+)',
+  //       component: () => import('@/views/business/lane/config'),
+  //       name: 'LaneConfig',
+  //       meta: { title: '通道配置', activeMenu: '/business/lane' }
+  //     }
+  //   ]
+  // },
   {
     path: '/business/flow-draw',
     component: Layout,

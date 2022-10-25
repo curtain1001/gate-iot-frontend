@@ -17,10 +17,18 @@ export default {
     })
   },
 
+  // 查询设备产品类型列表
+  getNetworks() {
+    return request({
+      url: '/business/device/network/supports',
+      method: 'get'
+    })
+  },
+
   // 开关
   enabled(id, status) {
     return request({
-      url: `/business/device/${id}/${status === 0 ? 'on' : 'off'}`,
+      url: `/business/device/${id}/${status ? 'on' : 'off'}`,
       method: 'put'
     })
   },

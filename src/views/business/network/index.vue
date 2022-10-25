@@ -1,9 +1,9 @@
 <template>
   <div class="app-container">
     <el-form v-show="showSearch" ref="queryForm" :model="queryParams" :inline="true" label-width="68px">
-      <el-form-item label="组件id" prop="networkConfigId">
+      <el-form-item label="组件id" prop="networkId">
         <el-input
-          v-model="queryParams.networkConfigId"
+          v-model="queryParams.networkId"
           placeholder="组件id"
           clearable
           size="small"
@@ -82,13 +82,18 @@
     </el-row>
 
     <el-table v-loading="loading" :data="networkList" @selection-change="handleSelectionChange">
-      <el-table-column label="组件id" align="center" prop="networkConfigId" />
-      <el-table-column label="组件名称" align="center" prop="name" />
-      <el-table-column label="自动开启" align="center" prop="enabled">
+      <el-table-column
+        label="车道名称"
+        align="center"
+        prop="areaNo"
+        :show-overflow-tooltip="true"
+      >
         <template slot-scope="scope">
-          {{ scope.row.enabled? '自动开启':'不自动开启' }}
+          <GetLaneName v-model="scope.row.laneId" />
         </template>
       </el-table-column>
+      <el-table-column label="组件id" align="center" prop="networkId" />
+      <el-table-column label="组件名称" align="center" prop="name" />
       <el-table-column label="类型" align="center" prop="type">
         <template slot-scope="scope">
           {{ scope.row.type? supportsList.find(x=>x.id ===scope.row.type).name :"" }}
@@ -96,7 +101,7 @@
       </el-table-column>
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
-          {{ scope.row.status==='enabled'? '已启动':(scope.row.status==='paused'?'已暂停':'已停止') }}
+          {{ scope.row.status==='enabled'? '已启动':(scope.row.status==='paused'?'已暂停':scope.row.status==='reboot'?'重启中': '已停止') }}
         </template>
       </el-table-column>
 
@@ -114,15 +119,15 @@
       >
         <template slot-scope="scope">
           <el-switch
-            v-model="scope.row.status"
+            v-model="scope.row.enabled"
             :disabled="scope.row.control==='own'"
-            active-value="disabled"
+            :active-value="1"
             active-text="关"
-            inactive-value="enabled"
+            :inactive-value="0"
             inactive-text="开"
             active-color="#ff4949"
             inactive-color="#13ce66"
-            @change="handleStatusChange(scope.row)"
+            @change="(val)=>handleStatusChange(val,scope.row)"
           />
         </template>
       </el-table-column>
@@ -160,8 +165,19 @@
     <!-- 添加或修改网络组件配置信息对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body :close-on-click-modal="false">
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="组件号" prop="networkConfigId">
-          <el-input v-model="form.networkConfigId" placeholder="请输入组件号" />
+        <el-form-item label="车道号" prop="laneId">
+          <el-cascader
+            ref="cascader"
+            v-model="form.laneId"
+            :show-all-levels="false"
+            :props="{emitPath:false,value:'value',label:'label',children:'children'}"
+            :options="laneList"
+            clearable
+            @change="handlerChange"
+          />
+        </el-form-item>
+        <el-form-item label="组件号" prop="networkId">
+          <el-input v-model="form.networkId" placeholder="请输入组件号" />
         </el-form-item>
         <el-form-item label="组件名称" prop="name">
           <el-input v-model="form.name" placeholder="请输入组件名称" />
@@ -174,12 +190,6 @@
               :label="network.name"
               :value="network.id"
             />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="自动开启" prop="enabled">
-          <el-select v-model="form.enabled" placeholder="请选择" clearable>
-            <el-option label="自动开启" value="true" />
-            <el-option label="不自动开启" value="false" />
           </el-select>
         </el-form-item>
         <el-divider v-if="form.type" content-position="left">配置属性</el-divider>
@@ -199,11 +209,14 @@
 
 <script>
 import api from './api/index'
+import { laneAll } from '@/views/business/area/api/index.js'
 import CustomizedSetting from '@/components/CustomizedSetting'
+import GetLaneName from '@/views/business/lane/component/GetLaneName'
 export default {
-  name: 'Config',
+  name: 'Network',
   components: {
-    CustomizedSetting
+    CustomizedSetting,
+    GetLaneName
   },
   data() {
     return {
@@ -222,6 +235,7 @@ export default {
       // 网络组件配置信息表格数据
       networkList: [],
       supportsList: [],
+      laneList: [],
       // 弹出层标题
       title: '',
       // 是否显示弹出层
@@ -230,7 +244,7 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
-        networkConfigId: null,
+        networkId: null,
         name: null,
         enabled: null,
         type: null,
@@ -240,7 +254,7 @@ export default {
       },
       // 表单参数
       form: {
-        networkConfigId: null,
+        networkId: null,
         name: null,
         enabled: null,
         type: null,
@@ -269,10 +283,17 @@ export default {
     }
   },
   created() {
+    this.getLaneList()
     this.getSupports()
     this.getList()
   },
   methods: {
+    getLaneList() {
+      laneAll().then((rep) => {
+        this.laneList = rep.data
+      })
+    },
+
     getSupports() {
       api.getSupports().then(resp => {
         if (resp.code === 200) {
@@ -308,11 +329,14 @@ export default {
       this.open = false
       this.reset()
     },
+    handlerChange() {
+
+    },
     // 表单重置
     reset() {
       this.form = {
         id: null,
-        networkConfigId: null,
+        networkId: null,
         name: null,
         enabled: null,
         type: null,
@@ -332,23 +356,22 @@ export default {
       this.resetForm('queryForm')
       this.handleQuery()
     },
-    handleStatusChange(row) {
-      console.log('network' + row)
-      const text = row.status === 'enabled' ? '启用' : '停用'
+    handleStatusChange(val, row) {
+      const text = val === 0 ? '启用' : '停用'
       this.$modal.confirm('确认要"' + text + '" "' + row.name + '"网络组件吗？').then(function() {
-        return api.action(row.id, row.status === 'enabled' ? 'start' : 'shutdown')
+        return api.action(row.id, val === 0 ? 'start' : 'shutdown')
       })
         .then(() => {
           this.$modal.msgSuccess(text + '成功')
+          this.getList()
         }).catch(function(e) {
           if (e === 'cancel') {
             // TODO 确认不通过执行逻辑
-
           } else if (e === 'close') {
             // TODO 右上角X的执行逻辑
-
           }
-          row.status = row.status === 'disabled' ? 'enabled' : 'disabled'
+          row.enabled = val === 0 ? 1 : 0
+          this.getList()
         })
     },
     // 多选框选中数据
